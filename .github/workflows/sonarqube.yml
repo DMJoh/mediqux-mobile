@@ -2,13 +2,16 @@ name: SonarQube
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   sonarqube:
-    name: SonarQube Scan
+    name: Build and analyze
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,8 +30,18 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage
 
+      - name: Get version
+        run: |
+          DATE=$(date +'%Y.%m.%d')
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "VERSION=${DATE}.${{ github.run_number }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${DATE}.${{ github.run_number }}" >> $GITHUB_ENV
+          fi
+
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_SCANNER_OPTS: "-Dsonar.projectVersion=${{ env.VERSION }}"
