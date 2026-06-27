@@ -1,0 +1,64 @@
+name: mediqux_mobile
+description: Mediqux - Medical records and patient management mobile app.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Navigation
+  go_router: ^14.6.3
+
+  # HTTP / API
+  dio: ^5.8.0+1
+  retrofit: ^4.4.2
+
+  # Secure storage (JWT tokens)
+  flutter_secure_storage: ^9.2.4
+
+  # Local DB / caching
+  hive_flutter: ^1.1.0
+
+  # JSON serialization
+  json_annotation: ^4.9.0
+
+  # Utilities
+  intl: ^0.20.2
+  equatable: ^2.0.7
+  logger: ^2.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linting - strict industry-standard rules
+  very_good_analysis: ^7.0.0
+
+  # Code generation
+  build_runner: ^2.4.15
+  riverpod_generator: ^2.6.5
+  json_serializable: ^6.9.5
+  retrofit_generator: ^9.1.8
+
+  # Testing
+  mocktail: ^1.0.4
+  flutter_riverpod: ^2.6.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
