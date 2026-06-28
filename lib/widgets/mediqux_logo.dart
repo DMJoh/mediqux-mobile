@@ -31,10 +31,7 @@ class MediquxLogo extends StatelessWidget {
         padding: EdgeInsets.all(size * 0.22),
         child: SvgPicture.asset(
           'assets/icons/heart_pulse.svg',
-          colorFilter: const ColorFilter.mode(
-            Colors.white,
-            BlendMode.srcIn,
-          ),
+          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
         ),
       ),
     );

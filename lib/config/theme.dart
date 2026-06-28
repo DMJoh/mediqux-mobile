@@ -47,15 +47,11 @@ abstract final class AppTheme {
         fillColor: const Color(0xFFF0F4FF),
         border: OutlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(14)),
-          borderSide: BorderSide(
-            color: _seed.withValues(alpha: 0.15),
-          ),
+          borderSide: BorderSide(color: _seed.withValues(alpha: 0.15)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(14)),
-          borderSide: BorderSide(
-            color: _seed.withValues(alpha: 0.2),
-          ),
+          borderSide: BorderSide(color: _seed.withValues(alpha: 0.2)),
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(14)),
@@ -124,15 +120,11 @@ abstract final class AppTheme {
         fillColor: cs.surfaceContainerHigh,
         border: OutlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(14)),
-          borderSide: BorderSide(
-            color: cs.outline.withValues(alpha: 0.4),
-          ),
+          borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.4)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(14)),
-          borderSide: BorderSide(
-            color: cs.outline.withValues(alpha: 0.4),
-          ),
+          borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(14)),

@@ -40,8 +40,13 @@ class AppointmentStats extends Equatable {
   final int today;
 
   @override
-  List<Object?> get props =>
-      [totalAppointments, upcoming, completed, cancelled, today];
+  List<Object?> get props => [
+    totalAppointments,
+    upcoming,
+    completed,
+    cancelled,
+    today,
+  ];
 }
 
 @JsonSerializable()

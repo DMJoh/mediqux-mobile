@@ -43,10 +43,7 @@ class AppDrawer extends ConsumerWidget {
             const Divider(),
             const Spacer(),
             ListTile(
-              leading: Icon(
-                Icons.logout_rounded,
-                color: cs.error,
-              ),
+              leading: Icon(Icons.logout_rounded, color: cs.error),
               title: Text(
                 'Sign Out',
                 style: tt.bodyMedium?.copyWith(
@@ -55,9 +52,7 @@ class AppDrawer extends ConsumerWidget {
                 ),
               ),
               onTap: () async {
-                await ref
-                    .read(authProvider.notifier)
-                    .logout();
+                await ref.read(authProvider.notifier).logout();
                 if (context.mounted) {
                   context.go('/login');
                 }
@@ -82,9 +77,7 @@ class _DrawerHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-      decoration: const BoxDecoration(
-        gradient: AppTheme.headerGradient,
-      ),
+      decoration: const BoxDecoration(gradient: AppTheme.headerGradient),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -140,21 +133,15 @@ class _NavItem extends StatelessWidget {
     final isActive = currentRoute == route;
 
     return ListTile(
-      leading: Icon(
-        icon,
-        color: isActive ? cs.primary : cs.onSurfaceVariant,
-      ),
+      leading: Icon(icon, color: isActive ? cs.primary : cs.onSurfaceVariant),
       title: Text(
         label,
         style: tt.bodyMedium?.copyWith(
           color: isActive ? cs.primary : cs.onSurface,
-          fontWeight:
-              isActive ? FontWeight.w700 : FontWeight.normal,
+          fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
         ),
       ),
-      tileColor: isActive
-          ? cs.primaryContainer.withValues(alpha: 0.5)
-          : null,
+      tileColor: isActive ? cs.primaryContainer.withValues(alpha: 0.5) : null,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(12)),
       ),

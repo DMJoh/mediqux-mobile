@@ -17,9 +17,7 @@ abstract class PatientApi {
   Future<PatientResponse> getPatient(@Path('id') String id);
 
   @POST('/patients')
-  Future<PatientResponse> createPatient(
-    @Body() PatientRequest body,
-  );
+  Future<PatientResponse> createPatient(@Body() PatientRequest body);
 
   @PUT('/patients/{id}')
   Future<PatientResponse> updatePatient(

@@ -8,16 +8,13 @@ part 'institution_api.g.dart';
 
 @RestApi()
 abstract class InstitutionApi {
-  factory InstitutionApi(Dio dio, {String baseUrl}) =
-      _InstitutionApi;
+  factory InstitutionApi(Dio dio, {String baseUrl}) = _InstitutionApi;
 
   @GET('/institutions')
   Future<InstitutionListResponse> getInstitutions();
 
   @GET('/institutions/{id}')
-  Future<InstitutionResponse> getInstitution(
-    @Path('id') String id,
-  );
+  Future<InstitutionResponse> getInstitution(@Path('id') String id);
 
   @POST('/institutions')
   Future<InstitutionResponse> createInstitution(
@@ -31,7 +28,5 @@ abstract class InstitutionApi {
   );
 
   @DELETE('/institutions/{id}')
-  Future<InstitutionResponse> deleteInstitution(
-    @Path('id') String id,
-  );
+  Future<InstitutionResponse> deleteInstitution(@Path('id') String id);
 }

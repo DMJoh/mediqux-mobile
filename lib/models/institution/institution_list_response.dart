@@ -12,9 +12,7 @@ class InstitutionListResponse {
     this.count,
   });
 
-  factory InstitutionListResponse.fromJson(
-    Map<String, dynamic> json,
-  ) =>
+  factory InstitutionListResponse.fromJson(Map<String, dynamic> json) =>
       _$InstitutionListResponseFromJson(json);
 
   final bool success;

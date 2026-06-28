@@ -7,10 +7,7 @@ import 'package:mediqux_mobile/providers/institution_provider.dart';
 import 'package:mediqux_mobile/screens/institutions/institutions_list_screen.dart';
 
 class InstitutionDetailScreen extends ConsumerWidget {
-  const InstitutionDetailScreen({
-    required this.institutionId,
-    super.key,
-  });
+  const InstitutionDetailScreen({required this.institutionId, super.key});
 
   final String institutionId;
 
@@ -51,52 +48,40 @@ class InstitutionDetailScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.of(ctx).pop(false),
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () =>
-                Navigator.of(ctx).pop(true),
+            onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
               'Delete',
-              style: TextStyle(
-                color:
-                    Theme.of(ctx).colorScheme.error,
-              ),
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
             ),
           ),
         ],
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    await ref
-        .read(institutionsProvider.notifier)
-        .delete(institution.id);
+    await ref.read(institutionsProvider.notifier).delete(institution.id);
     if (context.mounted) context.pop();
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final institutionAsync =
-        ref.watch(institutionDetailProvider(institutionId));
+    final institutionAsync = ref.watch(
+      institutionDetailProvider(institutionId),
+    );
 
     return Scaffold(
       backgroundColor: cs.surface,
       body: institutionAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: cs.error,
-              ),
+              Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
               const SizedBox(height: 16),
               Text(e.toString()),
               const SizedBox(height: 16),
@@ -108,8 +93,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
           ),
         ),
         data: (institution) {
-          final color =
-              institutionColor(institution.type);
+          final color = institutionColor(institution.type);
           final icon = institutionIcon(institution.type);
           return CustomScrollView(
             slivers: [
@@ -122,14 +106,10 @@ class InstitutionDetailScreen extends ConsumerWidget {
                 ),
                 actions: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.edit_rounded,
-                      color: Colors.white,
-                    ),
+                    icon: const Icon(Icons.edit_rounded, color: Colors.white),
                     tooltip: 'Edit',
-                    onPressed: () => context.push(
-                      '/institutions/${institution.id}/edit',
-                    ),
+                    onPressed: () =>
+                        context.push('/institutions/${institution.id}/edit'),
                   ),
                   PopupMenuButton<String>(
                     icon: const Icon(
@@ -138,11 +118,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                     ),
                     onSelected: (v) {
                       if (v == 'delete') {
-                        _confirmDelete(
-                          context,
-                          ref,
-                          institution,
-                        );
+                        _confirmDelete(context, ref, institution);
                       }
                     },
                     itemBuilder: (_) => [
@@ -156,12 +132,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                               size: 20,
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              'Delete',
-                              style: TextStyle(
-                                color: cs.error,
-                              ),
-                            ),
+                            Text('Delete', style: TextStyle(color: cs.error)),
                           ],
                         ),
                       ),
@@ -188,18 +159,12 @@ class InstitutionDetailScreen extends ConsumerWidget {
                         width: 72,
                         height: 72,
                         decoration: BoxDecoration(
-                          color: Colors.white
-                              .withValues(alpha: 0.15),
-                          borderRadius:
-                              const BorderRadius.all(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: const BorderRadius.all(
                             Radius.circular(20),
                           ),
                         ),
-                        child: Icon(
-                          icon,
-                          color: Colors.white,
-                          size: 36,
-                        ),
+                        child: Icon(icon, color: Colors.white, size: 36),
                       ),
                     ),
                   ),
@@ -212,35 +177,24 @@ class InstitutionDetailScreen extends ConsumerWidget {
                     children: [
                       if (institution.type != null)
                         Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: 16,
-                          ),
+                          padding: const EdgeInsets.only(bottom: 16),
                           child: Row(
                             children: [
                               Container(
-                                padding:
-                                    const EdgeInsets
-                                        .symmetric(
+                                padding: const EdgeInsets.symmetric(
                                   horizontal: 14,
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: color
-                                      .withValues(alpha: 0.1),
-                                  borderRadius:
-                                      const BorderRadius.all(
+                                  color: color.withValues(alpha: 0.1),
+                                  borderRadius: const BorderRadius.all(
                                     Radius.circular(20),
                                   ),
                                 ),
                                 child: Row(
-                                  mainAxisSize:
-                                      MainAxisSize.min,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
-                                      icon,
-                                      color: color,
-                                      size: 16,
-                                    ),
+                                    Icon(icon, color: color, size: 16),
                                     const SizedBox(width: 6),
                                     Text(
                                       institution.type!,
@@ -248,10 +202,9 @@ class InstitutionDetailScreen extends ConsumerWidget {
                                           .textTheme
                                           .labelMedium
                                           ?.copyWith(
-                                        color: color,
-                                        fontWeight:
-                                            FontWeight.w700,
-                                      ),
+                                            color: color,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -286,8 +239,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                           title: 'Address',
                           rows: [
                             _InfoRow(
-                              icon:
-                                  Icons.location_on_rounded,
+                              icon: Icons.location_on_rounded,
                               label: 'Address',
                               value: institution.address!,
                             ),
@@ -295,9 +247,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                         ),
                       ],
                       const SizedBox(height: 12),
-                      _DoctorsSection(
-                        institution: institution,
-                      ),
+                      _DoctorsSection(institution: institution),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -327,8 +277,7 @@ class _DoctorsSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
-        borderRadius:
-            const BorderRadius.all(Radius.circular(16)),
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,9 +299,7 @@ class _DoctorsSection extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: cs.primaryContainer,
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(20),
-                  ),
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
                 ),
                 child: Text(
                   '${doctors.length}',
@@ -368,9 +315,7 @@ class _DoctorsSection extends StatelessWidget {
           if (doctors.isEmpty)
             Text(
               'No doctors assigned to this institution.',
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             )
           else
             ...doctors.map(
@@ -394,8 +339,7 @@ class _DoctorsSection extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             d.fullName,
@@ -407,8 +351,7 @@ class _DoctorsSection extends StatelessWidget {
                           if (d.specialty != null)
                             Text(
                               d.specialty!,
-                              style: tt.labelSmall
-                                  ?.copyWith(
+                              style: tt.labelSmall?.copyWith(
                                 color: cs.onSurfaceVariant,
                               ),
                             ),
@@ -426,10 +369,7 @@ class _DoctorsSection extends StatelessWidget {
 }
 
 class _InfoSection extends StatelessWidget {
-  const _InfoSection({
-    required this.title,
-    required this.rows,
-  });
+  const _InfoSection({required this.title, required this.rows});
 
   final String title;
   final List<_InfoRow> rows;
@@ -443,8 +383,7 @@ class _InfoSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
-        borderRadius:
-            const BorderRadius.all(Radius.circular(16)),
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

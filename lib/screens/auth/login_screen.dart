@@ -26,10 +26,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    await ref.read(authProvider.notifier).login(
-          _usernameController.text.trim(),
-          _passwordController.text,
-        );
+    await ref
+        .read(authProvider.notifier)
+        .login(_usernameController.text.trim(), _passwordController.text);
   }
 
   @override
@@ -47,9 +46,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             heightFactor: 0.45,
             widthFactor: 1,
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: AppTheme.headerGradient,
-              ),
+              decoration: BoxDecoration(gradient: AppTheme.headerGradient),
             ),
           ),
           SafeArea(
@@ -94,14 +91,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        24, 32, 24, 24,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
                       child: Form(
                         key: _formKey,
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.stretch,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
                               'Welcome back',
@@ -122,17 +116,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               controller: _usernameController,
                               decoration: const InputDecoration(
                                 labelText: 'Username or Email',
-                                prefixIcon: Icon(
-                                  Icons.person_outline_rounded,
-                                ),
+                                prefixIcon: Icon(Icons.person_outline_rounded),
                               ),
                               textInputAction: TextInputAction.next,
                               autocorrect: false,
                               enableSuggestions: false,
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty)
-                                      ? 'Username is required'
-                                      : null,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Username is required'
+                                  : null,
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
@@ -150,8 +141,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         : Icons.visibility_off_rounded,
                                   ),
                                   onPressed: () => setState(
-                                    () => _obscurePassword =
-                                        !_obscurePassword,
+                                    () => _obscurePassword = !_obscurePassword,
                                   ),
                                 ),
                               ),
@@ -214,31 +204,20 @@ class _ErrorBanner extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: cs.errorContainer,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
-        border: Border.all(
-          color: cs.error.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: cs.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: cs.error,
-            size: 18,
-          ),
+          Icon(Icons.error_outline_rounded, color: cs.error, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onErrorContainer,
-              ),
+              style: tt.bodySmall?.copyWith(color: cs.onErrorContainer),
             ),
           ),
         ],

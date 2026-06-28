@@ -21,45 +21,29 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [
-      GoRoute(
-        path: '/setup',
-        builder: (_, __) => const ServerSetupScreen(),
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (_, __) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/',
-        builder: (_, __) => const DashboardScreen(),
-      ),
+      GoRoute(path: '/setup', builder: (_, __) => const ServerSetupScreen()),
+      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/', builder: (_, __) => const DashboardScreen()),
       GoRoute(
         path: '/institutions',
         builder: (_, __) => const InstitutionsListScreen(),
         routes: [
           GoRoute(
             path: 'new',
-            builder: (_, __) =>
-                const InstitutionFormScreen(),
+            builder: (_, __) => const InstitutionFormScreen(),
           ),
           GoRoute(
             path: ':id',
             builder: (_, state) {
-              final id =
-                  state.pathParameters['id'] ?? '';
-              return InstitutionDetailScreen(
-                institutionId: id,
-              );
+              final id = state.pathParameters['id'] ?? '';
+              return InstitutionDetailScreen(institutionId: id);
             },
             routes: [
               GoRoute(
                 path: 'edit',
                 builder: (_, state) {
-                  final id =
-                      state.pathParameters['id'] ?? '';
-                  return InstitutionFormScreen(
-                    institutionId: id,
-                  );
+                  final id = state.pathParameters['id'] ?? '';
+                  return InstitutionFormScreen(institutionId: id);
                 },
               ),
             ],
@@ -70,10 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/patients',
         builder: (_, __) => const PatientsListScreen(),
         routes: [
-          GoRoute(
-            path: 'new',
-            builder: (_, __) => const PatientFormScreen(),
-          ),
+          GoRoute(path: 'new', builder: (_, __) => const PatientFormScreen()),
           GoRoute(
             path: ':id',
             builder: (_, state) {
@@ -102,13 +83,10 @@ class _RouterNotifier extends ChangeNotifier {
     _authState = ref.read(authProvider);
 
     ref
-      ..listen<AsyncValue<String?>>(
-        serverConfigProvider,
-        (_, next) {
-          _serverState = next;
-          notifyListeners();
-        },
-      )
+      ..listen<AsyncValue<String?>>(serverConfigProvider, (_, next) {
+        _serverState = next;
+        notifyListeners();
+      })
       ..listen<AsyncValue<User?>>(authProvider, (_, next) {
         _authState = next;
         notifyListeners();
@@ -131,9 +109,7 @@ class _RouterNotifier extends ChangeNotifier {
     if (hasServer && !isLoggedIn && loc != '/login') {
       return '/login';
     }
-    if (hasServer &&
-        isLoggedIn &&
-        (loc == '/login' || loc == '/setup')) {
+    if (hasServer && isLoggedIn && (loc == '/login' || loc == '/setup')) {
       return '/';
     }
     return null;

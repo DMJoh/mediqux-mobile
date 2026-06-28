@@ -39,12 +39,8 @@ class Patient extends Equatable {
   String get fullName => '$firstName $lastName';
 
   String get initials {
-    final f = firstName.isNotEmpty
-        ? firstName[0].toUpperCase()
-        : '';
-    final l = lastName.isNotEmpty
-        ? lastName[0].toUpperCase()
-        : '';
+    final f = firstName.isNotEmpty ? firstName[0].toUpperCase() : '';
+    final l = lastName.isNotEmpty ? lastName[0].toUpperCase() : '';
     return '$f$l';
   }
 

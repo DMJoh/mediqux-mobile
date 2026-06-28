@@ -53,10 +53,7 @@ class DashboardScreen extends ConsumerWidget {
               firstName: user?.firstName ?? '',
             ),
             SliverToBoxAdapter(
-              child: _StatsRow(
-                statsAsync: statsAsync,
-                countAsync: countAsync,
-              ),
+              child: _StatsRow(statsAsync: statsAsync, countAsync: countAsync),
             ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -81,9 +78,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
             _AppointmentsSliver(apptAsync: apptAsync),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 32),
-            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
           ],
         ),
       ),
@@ -92,10 +87,7 @@ class DashboardScreen extends ConsumerWidget {
 }
 
 class _DashboardAppBar extends StatelessWidget {
-  const _DashboardAppBar({
-    required this.greeting,
-    required this.firstName,
-  });
+  const _DashboardAppBar({required this.greeting, required this.firstName});
 
   final String greeting;
   final String firstName;
@@ -109,9 +101,7 @@ class _DashboardAppBar extends StatelessWidget {
       child: Container(
         decoration: const BoxDecoration(
           gradient: AppTheme.headerGradient,
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(28),
-          ),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
         ),
         child: SafeArea(
           bottom: false,
@@ -128,8 +118,7 @@ class _DashboardAppBar extends StatelessWidget {
                           Icons.menu_rounded,
                           color: Colors.white,
                         ),
-                        onPressed: () =>
-                            Scaffold.of(ctx).openDrawer(),
+                        onPressed: () => Scaffold.of(ctx).openDrawer(),
                       ),
                     ),
                     const MediquxLogo(size: 36),
@@ -170,10 +159,7 @@ class _DashboardAppBar extends StatelessWidget {
 }
 
 class _StatsRow extends StatelessWidget {
-  const _StatsRow({
-    required this.statsAsync,
-    required this.countAsync,
-  });
+  const _StatsRow({required this.statsAsync, required this.countAsync});
 
   final AsyncValue<AppointmentStats> statsAsync;
   final AsyncValue<int> countAsync;
@@ -246,14 +232,10 @@ class _StatCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 16,
-        horizontal: 12,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
-        borderRadius:
-            const BorderRadius.all(Radius.circular(16)),
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
         boxShadow: [
           BoxShadow(
             color: cs.shadow.withValues(alpha: 0.06),
@@ -317,18 +299,14 @@ class _AppointmentsSliver extends StatelessWidget {
       ),
       data: (list) {
         if (list.isEmpty) {
-          return const SliverToBoxAdapter(
-            child: _EmptyState(),
-          );
+          return const SliverToBoxAdapter(child: _EmptyState());
         }
         return SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           sliver: SliverList.separated(
             itemCount: list.length,
-            separatorBuilder: (_, __) =>
-                const SizedBox(height: 10),
-            itemBuilder: (_, i) =>
-                _AppointmentCard(appointment: list[i]),
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (_, i) => _AppointmentCard(appointment: list[i]),
           ),
         );
       },
@@ -363,9 +341,8 @@ class _AppointmentCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final date = appointment.appointmentDate;
     final now = DateTime.now();
-    final isToday = date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
 
     final dateLabel = isToday
         ? 'Today · ${DateFormat.jm().format(date)}'
@@ -377,12 +354,9 @@ class _AppointmentCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
-        borderRadius:
-            const BorderRadius.all(Radius.circular(16)),
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
         border: isToday
-            ? Border.all(
-                color: cs.primary.withValues(alpha: 0.4),
-              )
+            ? Border.all(color: cs.primary.withValues(alpha: 0.4))
             : null,
         boxShadow: [
           BoxShadow(
@@ -401,14 +375,12 @@ class _AppointmentCard extends StatelessWidget {
               color: isToday
                   ? cs.primary.withValues(alpha: 0.12)
                   : cs.surfaceContainerHigh,
-              borderRadius:
-                  const BorderRadius.all(Radius.circular(12)),
+              borderRadius: const BorderRadius.all(Radius.circular(12)),
             ),
             child: Icon(
               Icons.calendar_today_rounded,
               size: 22,
-              color:
-                  isToday ? cs.primary : cs.onSurfaceVariant,
+              color: isToday ? cs.primary : cs.onSurfaceVariant,
             ),
           ),
           const SizedBox(width: 14),
@@ -431,12 +403,8 @@ class _AppointmentCard extends StatelessWidget {
                 Text(
                   dateLabel,
                   style: tt.bodySmall?.copyWith(
-                    color: isToday
-                        ? cs.primary
-                        : cs.onSurfaceVariant,
-                    fontWeight: isToday
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+                    color: isToday ? cs.primary : cs.onSurfaceVariant,
+                    fontWeight: isToday ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
                 if (appointment.doctorName.isNotEmpty) ...[
@@ -444,8 +412,7 @@ class _AppointmentCard extends StatelessWidget {
                   Text(
                     'Dr. ${appointment.doctorName}',
                     style: tt.bodySmall?.copyWith(
-                      color: cs.onSurfaceVariant
-                          .withValues(alpha: 0.7),
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -456,14 +423,10 @@ class _AppointmentCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: typeColor.withValues(alpha: 0.12),
-              borderRadius:
-                  const BorderRadius.all(Radius.circular(20)),
+              borderRadius: const BorderRadius.all(Radius.circular(20)),
             ),
             child: Text(
               appointment.type,
@@ -514,9 +477,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Pull down to refresh',
-            style: tt.bodySmall?.copyWith(
-              color: cs.onSurfaceVariant,
-            ),
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ],
       ),
@@ -537,22 +498,16 @@ class _ErrorCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.errorContainer,
-        borderRadius:
-            const BorderRadius.all(Radius.circular(14)),
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: cs.error,
-          ),
+          Icon(Icons.error_outline_rounded, color: cs.error),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Failed to load. Pull down to retry.',
-              style: tt.bodySmall?.copyWith(
-                color: cs.onErrorContainer,
-              ),
+              style: tt.bodySmall?.copyWith(color: cs.onErrorContainer),
             ),
           ),
         ],

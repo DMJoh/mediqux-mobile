@@ -57,9 +57,7 @@ class InstitutionDoctor extends Equatable {
     this.specialty,
   });
 
-  factory InstitutionDoctor.fromJson(
-    Map<String, dynamic> json,
-  ) =>
+  factory InstitutionDoctor.fromJson(Map<String, dynamic> json) =>
       _$InstitutionDoctorFromJson(json);
 
   final String id;
@@ -69,8 +67,7 @@ class InstitutionDoctor extends Equatable {
 
   String get fullName => 'Dr. $firstName $lastName';
 
-  Map<String, dynamic> toJson() =>
-      _$InstitutionDoctorToJson(this);
+  Map<String, dynamic> toJson() => _$InstitutionDoctorToJson(this);
 
   @override
   List<Object?> get props => [id];

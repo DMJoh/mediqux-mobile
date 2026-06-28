@@ -39,19 +39,14 @@ class Patients extends _$Patients {
     }
   }
 
-  Future<Patient> savePatient(
-    String id,
-    PatientRequest request,
-  ) async {
+  Future<Patient> savePatient(String id, PatientRequest request) async {
     final api = PatientApi(ref.read(dioProvider));
     try {
       final response = await api.updatePatient(id, request);
       final updated = response.data!;
       final current = state.valueOrNull ?? [];
       state = AsyncValue.data(
-        current
-            .map((p) => p.id == id ? updated : p)
-            .toList(),
+        current.map((p) => p.id == id ? updated : p).toList(),
       );
       return updated;
     } on DioException catch (e) {
@@ -64,9 +59,7 @@ class Patients extends _$Patients {
     try {
       await api.deletePatient(id);
       final current = state.valueOrNull ?? [];
-      state = AsyncValue.data(
-        current.where((p) => p.id != id).toList(),
-      );
+      state = AsyncValue.data(current.where((p) => p.id != id).toList());
     } on DioException catch (e) {
       throw Exception(_extractError(e));
     }

@@ -21,8 +21,7 @@ class PatientDetailScreen extends ConsumerWidget {
   ];
 
   Color _avatarColor(String name) {
-    final sum =
-        name.codeUnits.fold(0, (a, b) => a + b);
+    final sum = name.codeUnits.fold(0, (a, b) => a + b);
     return _palette[sum % _palette.length];
   }
 
@@ -45,42 +44,31 @@ class PatientDetailScreen extends ConsumerWidget {
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
               'Delete',
-              style: TextStyle(
-                color: Theme.of(ctx).colorScheme.error,
-              ),
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
             ),
           ),
         ],
       ),
     );
     if (confirmed != true) return;
-    await ref
-        .read(patientsProvider.notifier)
-        .delete(patient.id);
+    await ref.read(patientsProvider.notifier).delete(patient.id);
     if (context.mounted) context.pop();
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final patientAsync =
-        ref.watch(patientDetailProvider(patientId));
+    final patientAsync = ref.watch(patientDetailProvider(patientId));
 
     return Scaffold(
       backgroundColor: cs.surface,
       body: patientAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: cs.error,
-              ),
+              Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
               const SizedBox(height: 16),
               Text(e.toString()),
               const SizedBox(height: 16),
@@ -104,14 +92,10 @@ class PatientDetailScreen extends ConsumerWidget {
                 ),
                 actions: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.edit_rounded,
-                      color: Colors.white,
-                    ),
+                    icon: const Icon(Icons.edit_rounded, color: Colors.white),
                     tooltip: 'Edit',
-                    onPressed: () => context.push(
-                      '/patients/${patient.id}/edit',
-                    ),
+                    onPressed: () =>
+                        context.push('/patients/${patient.id}/edit'),
                   ),
                   PopupMenuButton<String>(
                     icon: const Icon(
@@ -120,11 +104,7 @@ class PatientDetailScreen extends ConsumerWidget {
                     ),
                     onSelected: (v) {
                       if (v == 'delete') {
-                        _confirmDelete(
-                          context,
-                          ref,
-                          patient,
-                        );
+                        _confirmDelete(context, ref, patient);
                       }
                     },
                     itemBuilder: (_) => [
@@ -138,12 +118,7 @@ class PatientDetailScreen extends ConsumerWidget {
                               size: 20,
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              'Delete',
-                              style: TextStyle(
-                                color: cs.error,
-                              ),
-                            ),
+                            Text('Delete', style: TextStyle(color: cs.error)),
                           ],
                         ),
                       ),
@@ -168,8 +143,7 @@ class PatientDetailScreen extends ConsumerWidget {
                     child: Center(
                       child: CircleAvatar(
                         radius: 48,
-                        backgroundColor:
-                            color.withValues(alpha: 0.25),
+                        backgroundColor: color.withValues(alpha: 0.25),
                         child: Text(
                           patient.initials,
                           style: const TextStyle(
@@ -193,9 +167,7 @@ class PatientDetailScreen extends ConsumerWidget {
                         rows: [
                           _InfoRow(
                             label: 'Date of Birth',
-                            value: _formatDob(
-                              patient.dateOfBirth,
-                            ),
+                            value: _formatDob(patient.dateOfBirth),
                           ),
                           _InfoRow(
                             label: 'Age',
@@ -213,14 +185,8 @@ class PatientDetailScreen extends ConsumerWidget {
                       _InfoSection(
                         title: 'Contact',
                         rows: [
-                          _InfoRow(
-                            label: 'Phone',
-                            value: patient.phone ?? '-',
-                          ),
-                          _InfoRow(
-                            label: 'Email',
-                            value: patient.email ?? '-',
-                          ),
+                          _InfoRow(label: 'Phone', value: patient.phone ?? '-'),
+                          _InfoRow(label: 'Email', value: patient.email ?? '-'),
                         ],
                       ),
                       if (patient.address != null &&
@@ -229,32 +195,23 @@ class PatientDetailScreen extends ConsumerWidget {
                         _InfoSection(
                           title: 'Address',
                           rows: [
-                            _InfoRow(
-                              label: 'Address',
-                              value: patient.address!,
-                            ),
+                            _InfoRow(label: 'Address', value: patient.address!),
                           ],
                         ),
                       ],
-                      if (patient.emergencyContactName !=
-                              null ||
-                          patient.emergencyContactPhone !=
-                              null) ...[
+                      if (patient.emergencyContactName != null ||
+                          patient.emergencyContactPhone != null) ...[
                         const SizedBox(height: 16),
                         _InfoSection(
                           title: 'Emergency Contact',
                           rows: [
                             _InfoRow(
                               label: 'Name',
-                              value: patient
-                                      .emergencyContactName ??
-                                  '-',
+                              value: patient.emergencyContactName ?? '-',
                             ),
                             _InfoRow(
                               label: 'Phone',
-                              value: patient
-                                      .emergencyContactPhone ??
-                                  '-',
+                              value: patient.emergencyContactPhone ?? '-',
                             ),
                           ],
                         ),
@@ -280,10 +237,7 @@ class PatientDetailScreen extends ConsumerWidget {
 }
 
 class _InfoSection extends StatelessWidget {
-  const _InfoSection({
-    required this.title,
-    required this.rows,
-  });
+  const _InfoSection({required this.title, required this.rows});
 
   final String title;
   final List<_InfoRow> rows;
@@ -297,8 +251,7 @@ class _InfoSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
-        borderRadius:
-            const BorderRadius.all(Radius.circular(16)),
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,10 +272,7 @@ class _InfoSection extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.label,
-    required this.value,
-  });
+  const _InfoRow({required this.label, required this.value});
 
   final String label;
   final String value;

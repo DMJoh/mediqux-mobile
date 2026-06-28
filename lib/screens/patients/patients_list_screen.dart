@@ -9,15 +9,12 @@ class PatientsListScreen extends ConsumerStatefulWidget {
   const PatientsListScreen({super.key});
 
   @override
-  ConsumerState<PatientsListScreen> createState() =>
-      _PatientsListScreenState();
+  ConsumerState<PatientsListScreen> createState() => _PatientsListScreenState();
 }
 
-class _PatientsListScreenState
-    extends ConsumerState<PatientsListScreen> {
+class _PatientsListScreenState extends ConsumerState<PatientsListScreen> {
   bool _isSearching = false;
-  final TextEditingController _searchController =
-      TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void dispose() {
@@ -58,8 +55,7 @@ class _PatientsListScreenState
             : Builder(
                 builder: (ctx) => IconButton(
                   icon: const Icon(Icons.menu_rounded),
-                  onPressed: () =>
-                      Scaffold.of(ctx).openDrawer(),
+                  onPressed: () => Scaffold.of(ctx).openDrawer(),
                 ),
               ),
         title: _isSearching
@@ -95,38 +91,29 @@ class _PatientsListScreenState
           else
             IconButton(
               icon: const Icon(Icons.search_rounded),
-              onPressed: () =>
-                  setState(() => _isSearching = true),
+              onPressed: () => setState(() => _isSearching = true),
             ),
         ],
       ),
       body: patientsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           message: e.toString(),
-          onRetry: () =>
-              ref.read(patientsProvider.notifier).refresh(),
+          onRetry: () => ref.read(patientsProvider.notifier).refresh(),
         ),
         data: (patients) {
           final filtered = _applySearch(patients);
           if (filtered.isEmpty) {
-            return _EmptyState(
-              hasSearch: _searchController.text.isNotEmpty,
-            );
+            return _EmptyState(hasSearch: _searchController.text.isNotEmpty);
           }
           return RefreshIndicator(
-            onRefresh: () =>
-                ref.read(patientsProvider.notifier).refresh(),
+            onRefresh: () => ref.read(patientsProvider.notifier).refresh(),
             color: cs.primary,
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: 8),
-              itemBuilder: (_, i) =>
-                  _PatientCard(patient: filtered[i]),
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) => _PatientCard(patient: filtered[i]),
             ),
           );
         },
@@ -172,8 +159,7 @@ class _PatientCard extends StatelessWidget {
 
     return Card(
       child: InkWell(
-        borderRadius:
-            const BorderRadius.all(Radius.circular(16)),
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
         onTap: () => context.push('/patients/${patient.id}'),
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -181,8 +167,7 @@ class _PatientCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor:
-                    color.withValues(alpha: 0.15),
+                backgroundColor: color.withValues(alpha: 0.15),
                 child: Text(
                   patient.initials,
                   style: tt.titleMedium?.copyWith(
@@ -194,8 +179,7 @@ class _PatientCard extends StatelessWidget {
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       patient.fullName,
@@ -215,14 +199,12 @@ class _PatientCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (patient.phone != null ||
-                        patient.email != null) ...[
+                    if (patient.phone != null || patient.email != null) ...[
                       const SizedBox(height: 2),
                       Text(
                         patient.phone ?? patient.email ?? '',
                         style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant
-                              .withValues(alpha: 0.7),
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -231,10 +213,7 @@ class _PatientCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: cs.onSurfaceVariant,
-              ),
+              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
             ],
           ),
         ),
@@ -273,9 +252,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              hasSearch
-                  ? 'No patients match your search'
-                  : 'No patients yet',
+              hasSearch ? 'No patients match your search' : 'No patients yet',
               style: tt.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: cs.onSurface,
@@ -284,8 +261,7 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             if (!hasSearch)
               FilledButton.icon(
-                onPressed: () =>
-                    context.push('/patients/new'),
+                onPressed: () => context.push('/patients/new'),
                 icon: const Icon(Icons.add_rounded),
                 label: const Text('Add your first patient'),
               ),
@@ -297,10 +273,7 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorState({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -315,31 +288,20 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: cs.error,
-            ),
+            Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
             const SizedBox(height: 16),
             Text(
               'Failed to load patients',
-              style: tt.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
+            FilledButton(onPressed: onRetry, child: const Text('Retry')),
           ],
         ),
       ),

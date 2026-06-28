@@ -18,11 +18,7 @@ class LoginData {
 // Matches the full API envelope: { success: bool, data: {...}, error: "..." }
 @JsonSerializable()
 class LoginResponse {
-  const LoginResponse({
-    required this.success,
-    this.data,
-    this.error,
-  });
+  const LoginResponse({required this.success, this.data, this.error});
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) =>
       _$LoginResponseFromJson(json);

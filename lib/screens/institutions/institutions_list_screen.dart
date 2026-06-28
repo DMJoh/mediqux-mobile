@@ -63,9 +63,7 @@ class _InstitutionsListScreenState
     super.dispose();
   }
 
-  List<Institution> _applySearch(
-    List<Institution> institutions,
-  ) {
+  List<Institution> _applySearch(List<Institution> institutions) {
     final q = _searchCtrl.text.trim().toLowerCase();
     if (q.isEmpty) return institutions;
     return institutions.where((i) {
@@ -99,8 +97,7 @@ class _InstitutionsListScreenState
             : Builder(
                 builder: (ctx) => IconButton(
                   icon: const Icon(Icons.menu_rounded),
-                  onPressed: () =>
-                      Scaffold.of(ctx).openDrawer(),
+                  onPressed: () => Scaffold.of(ctx).openDrawer(),
                 ),
               ),
         title: _isSearching
@@ -136,52 +133,35 @@ class _InstitutionsListScreenState
           else
             IconButton(
               icon: const Icon(Icons.search_rounded),
-              onPressed: () =>
-                  setState(() => _isSearching = true),
+              onPressed: () => setState(() => _isSearching = true),
             ),
         ],
       ),
       body: institutionsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           message: e.toString(),
-          onRetry: () => ref
-              .read(institutionsProvider.notifier)
-              .refresh(),
+          onRetry: () => ref.read(institutionsProvider.notifier).refresh(),
         ),
         data: (list) {
           final filtered = _applySearch(list);
           if (filtered.isEmpty) {
-            return _EmptyState(
-              hasSearch: _searchCtrl.text.isNotEmpty,
-            );
+            return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
           }
           return RefreshIndicator(
-            onRefresh: () => ref
-                .read(institutionsProvider.notifier)
-                .refresh(),
+            onRefresh: () => ref.read(institutionsProvider.notifier).refresh(),
             color: cs.primary,
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                16,
-                8,
-                16,
-                96,
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: 8),
-              itemBuilder: (_, i) =>
-                  _InstitutionCard(institution: filtered[i]),
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) => _InstitutionCard(institution: filtered[i]),
             ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () =>
-            context.push('/institutions/new'),
+        onPressed: () => context.push('/institutions/new'),
         tooltip: 'Add institution',
         child: const Icon(Icons.add_rounded),
       ),
@@ -204,10 +184,8 @@ class _InstitutionCard extends StatelessWidget {
 
     return Card(
       child: InkWell(
-        borderRadius:
-            const BorderRadius.all(Radius.circular(16)),
-        onTap: () => context
-            .push('/institutions/${institution.id}'),
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
+        onTap: () => context.push('/institutions/${institution.id}'),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -217,17 +195,14 @@ class _InstitutionCard extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(14),
-                  ),
+                  borderRadius: const BorderRadius.all(Radius.circular(14)),
                 ),
                 child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       institution.name,
@@ -243,16 +218,13 @@ class _InstitutionCard extends StatelessWidget {
                       children: [
                         if (institution.type != null) ...[
                           Container(
-                            padding:
-                                const EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  color.withValues(alpha: 0.1),
-                              borderRadius:
-                                  const BorderRadius.all(
+                              color: color.withValues(alpha: 0.1),
+                              borderRadius: const BorderRadius.all(
                                 Radius.circular(20),
                               ),
                             ),
@@ -284,12 +256,9 @@ class _InstitutionCard extends StatelessWidget {
                         institution.address != null) ...[
                       const SizedBox(height: 3),
                       Text(
-                        institution.phone ??
-                            institution.address ??
-                            '',
+                        institution.phone ?? institution.address ?? '',
                         style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant
-                              .withValues(alpha: 0.7),
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -298,10 +267,7 @@ class _InstitutionCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: cs.onSurfaceVariant,
-              ),
+              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
             ],
           ),
         ),
@@ -351,8 +317,7 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             if (!hasSearch)
               FilledButton.icon(
-                onPressed: () =>
-                    context.push('/institutions/new'),
+                onPressed: () => context.push('/institutions/new'),
                 icon: const Icon(Icons.add_rounded),
                 label: const Text('Add institution'),
               ),
@@ -364,10 +329,7 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorState({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -382,31 +344,20 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: cs.error,
-            ),
+            Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
             const SizedBox(height: 16),
             Text(
               'Failed to load institutions',
-              style: tt.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
+            FilledButton(onPressed: onRetry, child: const Text('Retry')),
           ],
         ),
       ),

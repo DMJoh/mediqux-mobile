@@ -15,10 +15,7 @@ const _kTypes = [
 ];
 
 class InstitutionFormScreen extends ConsumerStatefulWidget {
-  const InstitutionFormScreen({
-    super.key,
-    this.institutionId,
-  });
+  const InstitutionFormScreen({super.key, this.institutionId});
 
   final String? institutionId;
 
@@ -27,8 +24,7 @@ class InstitutionFormScreen extends ConsumerStatefulWidget {
       _InstitutionFormScreenState();
 }
 
-class _InstitutionFormScreenState
-    extends ConsumerState<InstitutionFormScreen> {
+class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
@@ -72,40 +68,27 @@ class _InstitutionFormScreenState
       address: _addressCtrl.text.trim().isEmpty
           ? null
           : _addressCtrl.text.trim(),
-      phone: _phoneCtrl.text.trim().isEmpty
-          ? null
-          : _phoneCtrl.text.trim(),
-      email: _emailCtrl.text.trim().isEmpty
-          ? null
-          : _emailCtrl.text.trim(),
+      phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+      email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
       website: _websiteCtrl.text.trim().isEmpty
           ? null
           : _websiteCtrl.text.trim(),
     );
     try {
       if (!_isEdit) {
-        await ref
-            .read(institutionsProvider.notifier)
-            .create(request);
+        await ref.read(institutionsProvider.notifier).create(request);
       } else {
         await ref
             .read(institutionsProvider.notifier)
-            .saveInstitution(
-              widget.institutionId!,
-              request,
-            );
-        ref.invalidate(
-          institutionDetailProvider(
-            widget.institutionId!,
-          ),
-        );
+            .saveInstitution(widget.institutionId!, request);
+        ref.invalidate(institutionDetailProvider(widget.institutionId!));
       }
       if (mounted) context.pop();
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -117,13 +100,9 @@ class _InstitutionFormScreenState
     final cs = Theme.of(context).colorScheme;
 
     if (_isEdit && !_initialized) {
-      ref
-          .watch(
-            institutionDetailProvider(
-              widget.institutionId!,
-            ),
-          )
-          .whenData((inst) {
+      ref.watch(institutionDetailProvider(widget.institutionId!)).whenData((
+        inst,
+      ) {
         if (!_initialized) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _initFrom(inst));
@@ -136,9 +115,7 @@ class _InstitutionFormScreenState
             title: const Text('Edit Institution'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(
-            child: CircularProgressIndicator(),
-          ),
+          body: const Center(child: CircularProgressIndicator()),
         );
       }
     }
@@ -149,20 +126,11 @@ class _InstitutionFormScreenState
         backgroundColor: cs.surface,
         elevation: 0,
         leading: _isEdit
-            ? BackButton(
-                color: cs.onSurface,
-                onPressed: () => context.pop(),
-              )
-            : CloseButton(
-                color: cs.onSurface,
-                onPressed: () => context.pop(),
-              ),
+            ? BackButton(color: cs.onSurface, onPressed: () => context.pop())
+            : CloseButton(color: cs.onSurface, onPressed: () => context.pop()),
         title: Text(
           _isEdit ? 'Edit Institution' : 'Add Institution',
-          style: TextStyle(
-            color: cs.onSurface,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
         ),
         actions: [
           Padding(
@@ -188,16 +156,14 @@ class _InstitutionFormScreenState
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
                 controller: _nameCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Institution Name *',
                 ),
-                textCapitalization:
-                    TextCapitalization.words,
+                textCapitalization: TextCapitalization.words,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
                     return 'Name is required';
@@ -211,33 +177,22 @@ class _InstitutionFormScreenState
                 // initialValue only sets once, breaking edit pre-fill.
                 // ignore: deprecated_member_use
                 value: _selectedType,
-                decoration: const InputDecoration(
-                  labelText: 'Type',
-                ),
+                decoration: const InputDecoration(labelText: 'Type'),
                 items: _kTypes
-                    .map(
-                      (t) => DropdownMenuItem(
-                        value: t,
-                        child: Text(t),
-                      ),
-                    )
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                     .toList(),
-                onChanged: (v) =>
-                    setState(() => _selectedType = v),
+                onChanged: (v) => setState(() => _selectedType = v),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _phoneCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                ),
+                decoration: const InputDecoration(labelText: 'Phone'),
                 keyboardType: TextInputType.phone,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
                     return null;
                   }
-                  if (!RegExp(r'^[0-9+\s\-]+$')
-                      .hasMatch(v.trim())) {
+                  if (!RegExp(r'^[0-9+\s\-]+$').hasMatch(v.trim())) {
                     return 'Invalid phone number';
                   }
                   return null;
@@ -246,16 +201,13 @@ class _InstitutionFormScreenState
               const SizedBox(height: 12),
               TextFormField(
                 controller: _emailCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                ),
+                decoration: const InputDecoration(labelText: 'Email'),
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
                     return null;
                   }
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$')
-                      .hasMatch(v.trim())) {
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
                     return 'Invalid email address';
                   }
                   return null;
@@ -273,8 +225,7 @@ class _InstitutionFormScreenState
                   if (v == null || v.trim().isEmpty) {
                     return null;
                   }
-                  if (!RegExp('^https?://.+')
-                      .hasMatch(v.trim())) {
+                  if (!RegExp('^https?://.+').hasMatch(v.trim())) {
                     return 'Must start with http:// or https://';
                   }
                   return null;
@@ -283,9 +234,7 @@ class _InstitutionFormScreenState
               const SizedBox(height: 12),
               TextFormField(
                 controller: _addressCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                ),
+                decoration: const InputDecoration(labelText: 'Address'),
                 maxLines: 3,
                 keyboardType: TextInputType.multiline,
               ),

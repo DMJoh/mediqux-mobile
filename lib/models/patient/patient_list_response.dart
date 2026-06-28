@@ -20,6 +20,5 @@ class PatientListResponse {
   final String? error;
   final int? count;
 
-  Map<String, dynamic> toJson() =>
-      _$PatientListResponseToJson(this);
+  Map<String, dynamic> toJson() => _$PatientListResponseToJson(this);
 }

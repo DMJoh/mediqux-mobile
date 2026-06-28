@@ -9,12 +9,10 @@ class ServerSetupScreen extends ConsumerStatefulWidget {
   const ServerSetupScreen({super.key});
 
   @override
-  ConsumerState<ServerSetupScreen> createState() =>
-      _ServerSetupScreenState();
+  ConsumerState<ServerSetupScreen> createState() => _ServerSetupScreenState();
 }
 
-class _ServerSetupScreenState
-    extends ConsumerState<ServerSetupScreen> {
+class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _urlController = TextEditingController();
   bool _isLoading = false;
@@ -65,7 +63,8 @@ class _ServerSetupScreenState
     if (!reachable) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Could not reach the server. '
+        _errorMessage =
+            'Could not reach the server. '
             'Check the address and try again.';
       });
       return;
@@ -88,9 +87,7 @@ class _ServerSetupScreenState
             heightFactor: 0.42,
             widthFactor: 1,
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: AppTheme.headerGradient,
-              ),
+              decoration: BoxDecoration(gradient: AppTheme.headerGradient),
             ),
           ),
           SafeArea(
@@ -132,14 +129,11 @@ class _ServerSetupScreenState
                       ),
                     ),
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        24, 32, 24, 24,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
                       child: Form(
                         key: _formKey,
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.stretch,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
                               'Server Setup',
@@ -183,22 +177,18 @@ class _ServerSetupScreenState
                             ),
                             if (_errorMessage != null) ...[
                               const SizedBox(height: 16),
-                              _ErrorBanner(
-                                message: _errorMessage!,
-                              ),
+                              _ErrorBanner(message: _errorMessage!),
                             ],
                             const SizedBox(height: 24),
                             SizedBox(
                               height: 54,
                               child: FilledButton(
-                                onPressed:
-                                    _isLoading ? null : _connect,
+                                onPressed: _isLoading ? null : _connect,
                                 child: _isLoading
                                     ? const SizedBox(
                                         width: 22,
                                         height: 22,
-                                        child:
-                                            CircularProgressIndicator(
+                                        child: CircularProgressIndicator(
                                           strokeWidth: 2.5,
                                           color: Colors.white,
                                         ),
@@ -208,14 +198,14 @@ class _ServerSetupScreenState
                             ),
                             const SizedBox(height: 20),
                             Row(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Icon(
                                   Icons.info_outline_rounded,
                                   size: 15,
-                                  color: cs.onSurfaceVariant
-                                      .withValues(alpha: 0.6),
+                                  color: cs.onSurfaceVariant.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -223,8 +213,9 @@ class _ServerSetupScreenState
                                     'Contact your Mediqux administrator '
                                     'for the server address.',
                                     style: tt.bodySmall?.copyWith(
-                                      color: cs.onSurfaceVariant
-                                          .withValues(alpha: 0.6),
+                                      color: cs.onSurfaceVariant.withValues(
+                                        alpha: 0.6,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -255,31 +246,20 @@ class _ErrorBanner extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: cs.errorContainer,
         borderRadius: const BorderRadius.all(Radius.circular(12)),
-        border: Border.all(
-          color: cs.error.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: cs.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: cs.error,
-            size: 18,
-          ),
+          Icon(Icons.error_outline_rounded, color: cs.error, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onErrorContainer,
-              ),
+              style: tt.bodySmall?.copyWith(color: cs.onErrorContainer),
             ),
           ),
         ],

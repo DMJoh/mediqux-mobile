@@ -12,9 +12,7 @@ class InstitutionResponse {
     this.message,
   });
 
-  factory InstitutionResponse.fromJson(
-    Map<String, dynamic> json,
-  ) =>
+  factory InstitutionResponse.fromJson(Map<String, dynamic> json) =>
       _$InstitutionResponseFromJson(json);
 
   final bool success;

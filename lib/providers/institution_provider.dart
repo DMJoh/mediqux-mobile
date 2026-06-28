@@ -47,14 +47,11 @@ class Institutions extends _$Institutions {
   ) async {
     final api = InstitutionApi(ref.read(dioProvider));
     try {
-      final response =
-          await api.updateInstitution(id, request);
+      final response = await api.updateInstitution(id, request);
       final updated = response.data!;
       final current = state.valueOrNull ?? [];
       state = AsyncValue.data(
-        current
-            .map((i) => i.id == id ? updated : i)
-            .toList(),
+        current.map((i) => i.id == id ? updated : i).toList(),
       );
       return updated;
     } on DioException catch (e) {
@@ -67,9 +64,7 @@ class Institutions extends _$Institutions {
     try {
       await api.deleteInstitution(id);
       final current = state.valueOrNull ?? [];
-      state = AsyncValue.data(
-        current.where((i) => i.id != id).toList(),
-      );
+      state = AsyncValue.data(current.where((i) => i.id != id).toList());
     } on DioException catch (e) {
       throw Exception(_extractError(e));
     }
@@ -98,10 +93,7 @@ class Institutions extends _$Institutions {
 }
 
 @riverpod
-Future<Institution> institutionDetail(
-  Ref ref,
-  String institutionId,
-) async {
+Future<Institution> institutionDetail(Ref ref, String institutionId) async {
   final api = InstitutionApi(ref.watch(dioProvider));
   final response = await api.getInstitution(institutionId);
   return response.data!;

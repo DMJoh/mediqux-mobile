@@ -6,9 +6,9 @@ import 'package:mediqux_mobile/models/user.dart';
 
 class StorageService {
   StorageService()
-      : _storage = const FlutterSecureStorage(
-          aOptions: AndroidOptions(encryptedSharedPreferences: true),
-        );
+    : _storage = const FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      );
 
   final FlutterSecureStorage _storage;
 
@@ -17,10 +17,8 @@ class StorageService {
 
   Future<String?> readToken() => _storage.read(key: ApiConfig.tokenKey);
 
-  Future<void> saveUser(User user) => _storage.write(
-        key: ApiConfig.userKey,
-        value: jsonEncode(user.toJson()),
-      );
+  Future<void> saveUser(User user) =>
+      _storage.write(key: ApiConfig.userKey, value: jsonEncode(user.toJson()));
 
   Future<User?> readUser() async {
     final raw = await _storage.read(key: ApiConfig.userKey);
@@ -31,8 +29,7 @@ class StorageService {
   Future<void> saveServerUrl(String url) =>
       _storage.write(key: ApiConfig.serverUrlKey, value: url);
 
-  Future<String?> readServerUrl() =>
-      _storage.read(key: ApiConfig.serverUrlKey);
+  Future<String?> readServerUrl() => _storage.read(key: ApiConfig.serverUrlKey);
 
   /// Clears auth credentials only — server URL is preserved.
   Future<void> clearAuth() async {

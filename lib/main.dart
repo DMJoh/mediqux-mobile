@@ -16,10 +16,7 @@ Future<void> main() async {
   await container.read(serverConfigProvider.future);
   await container.read(authProvider.future);
   runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const MediquxApp(),
-    ),
+    UncontrolledProviderScope(container: container, child: const MediquxApp()),
   );
 }
 

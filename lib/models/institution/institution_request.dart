@@ -13,9 +13,7 @@ class InstitutionRequest {
     this.website,
   });
 
-  factory InstitutionRequest.fromJson(
-    Map<String, dynamic> json,
-  ) =>
+  factory InstitutionRequest.fromJson(Map<String, dynamic> json) =>
       _$InstitutionRequestFromJson(json);
 
   final String name;
@@ -25,6 +23,5 @@ class InstitutionRequest {
   final String? email;
   final String? website;
 
-  Map<String, dynamic> toJson() =>
-      _$InstitutionRequestToJson(this);
+  Map<String, dynamic> toJson() => _$InstitutionRequestToJson(this);
 }
