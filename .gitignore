@@ -65,3 +65,7 @@ android/key.properties
 **/*.g.dart
 **/*.freezed.dart
 **/*.gen.dart
+
+# Android generated files
+android/.kotlin/
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
