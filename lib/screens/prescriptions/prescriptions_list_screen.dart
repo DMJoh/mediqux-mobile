@@ -1,59 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mediqux_mobile/models/institution/institution.dart';
-import 'package:mediqux_mobile/providers/institution_provider.dart';
+import 'package:mediqux_mobile/models/prescription/prescription.dart';
+import 'package:mediqux_mobile/providers/prescription_provider.dart';
 import 'package:mediqux_mobile/widgets/app_drawer.dart';
 
-// Returns icon and color for a given institution type.
-IconData institutionIcon(String? type) {
-  switch (type?.toLowerCase()) {
-    case 'hospital':
-      return Icons.local_hospital_rounded;
-    case 'clinic':
-      return Icons.medical_services_rounded;
-    case 'laboratory':
-      return Icons.science_rounded;
-    case 'pharmacy':
-      return Icons.medication_rounded;
-    case 'diagnostic center':
-      return Icons.biotech_rounded;
-    case 'nursing home':
-      return Icons.elderly_rounded;
-    default:
-      return Icons.business_rounded;
-  }
-}
-
-Color institutionColor(String? type) {
-  switch (type?.toLowerCase()) {
-    case 'hospital':
-      return const Color(0xFFEF5350);
-    case 'clinic':
-      return const Color(0xFF2196F3);
-    case 'laboratory':
-      return const Color(0xFFAB47BC);
-    case 'pharmacy':
-      return const Color(0xFF43A047);
-    case 'diagnostic center':
-      return const Color(0xFFFF7043);
-    case 'nursing home':
-      return const Color(0xFF00ACC1);
-    default:
-      return const Color(0xFF607D8B);
-  }
-}
-
-class InstitutionsListScreen extends ConsumerStatefulWidget {
-  const InstitutionsListScreen({super.key});
+class PrescriptionsListScreen extends ConsumerStatefulWidget {
+  const PrescriptionsListScreen({super.key});
 
   @override
-  ConsumerState<InstitutionsListScreen> createState() =>
-      _InstitutionsListScreenState();
+  ConsumerState<PrescriptionsListScreen> createState() =>
+      _PrescriptionsListScreenState();
 }
 
-class _InstitutionsListScreenState
-    extends ConsumerState<InstitutionsListScreen> {
+class _PrescriptionsListScreenState
+    extends ConsumerState<PrescriptionsListScreen> {
   bool _isSearching = false;
   final _searchCtrl = TextEditingController();
 
@@ -63,26 +24,37 @@ class _InstitutionsListScreenState
     super.dispose();
   }
 
-  List<Institution> _applySearch(List<Institution> institutions) {
+  List<Prescription> _applySearch(List<Prescription> items) {
     final q = _searchCtrl.text.trim().toLowerCase();
-    if (q.isEmpty) return institutions;
-    return institutions.where((i) {
-      return i.name.toLowerCase().contains(q) ||
-          (i.type?.toLowerCase().contains(q) ?? false) ||
-          (i.address?.toLowerCase().contains(q) ?? false) ||
-          (i.phone?.contains(q) ?? false) ||
-          (i.email?.toLowerCase().contains(q) ?? false);
+    if (q.isEmpty) return items;
+    return items.where((p) {
+      return p.patientName.toLowerCase().contains(q) ||
+          p.medicationDisplay.toLowerCase().contains(q);
     }).toList();
+  }
+
+  Color _statusColor(BuildContext context, String? status) {
+    final cs = Theme.of(context).colorScheme;
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return Colors.green;
+      case 'discontinued':
+        return cs.onSurfaceVariant;
+      case 'completed':
+        return cs.primary;
+      default:
+        return cs.onSurfaceVariant;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final institutionsAsync = ref.watch(institutionsProvider);
+    final rxAsync = ref.watch(prescriptionsProvider);
 
     return Scaffold(
       backgroundColor: cs.surface,
-      drawer: const AppDrawer(currentRoute: '/institutions'),
+      drawer: const AppDrawer(currentRoute: '/prescriptions'),
       appBar: AppBar(
         backgroundColor: cs.surface,
         elevation: 0,
@@ -106,14 +78,14 @@ class _InstitutionsListScreenState
                 controller: _searchCtrl,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  hintText: 'Search institutions...',
+                  hintText: 'Search prescriptions...',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
                 ),
                 onChanged: (_) => setState(() {}),
               )
             : Text(
-                'Institutions',
+                'Prescriptions',
                 style: TextStyle(
                   color: cs.onSurface,
                   fontWeight: FontWeight.w700,
@@ -138,11 +110,11 @@ class _InstitutionsListScreenState
             ),
         ],
       ),
-      body: institutionsAsync.when(
+      body: rxAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           message: e.toString(),
-          onRetry: () => ref.read(institutionsProvider.notifier).refresh(),
+          onRetry: () => ref.read(prescriptionsProvider.notifier).refresh(),
         ),
         data: (list) {
           final filtered = _applySearch(list);
@@ -150,63 +122,68 @@ class _InstitutionsListScreenState
             return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
           }
           return RefreshIndicator(
-            onRefresh: () => ref.read(institutionsProvider.notifier).refresh(),
+            onRefresh: () => ref.read(prescriptionsProvider.notifier).refresh(),
             color: cs.primary,
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) => _InstitutionCard(institution: filtered[i]),
+              itemBuilder: (_, i) => _PrescriptionCard(
+                rx: filtered[i],
+                statusColor: _statusColor(context, filtered[i].status),
+              ),
             ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/institutions/new'),
-        tooltip: 'Add institution',
+        onPressed: () => context.push('/prescriptions/new'),
+        tooltip: 'Add prescription',
         child: const Icon(Icons.add_rounded),
       ),
     );
   }
 }
 
-class _InstitutionCard extends StatelessWidget {
-  const _InstitutionCard({required this.institution});
+class _PrescriptionCard extends StatelessWidget {
+  const _PrescriptionCard({required this.rx, required this.statusColor});
 
-  final Institution institution;
+  final Prescription rx;
+  final Color statusColor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final color = institutionColor(institution.type);
-    final icon = institutionIcon(institution.type);
-    final dc = institution.doctorCount;
 
     return Card(
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(16)),
-        onTap: () => context.push('/institutions/${institution.id}'),
+        onTap: () => context.push('/prescriptions/${rx.id}'),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: const BorderRadius.all(Radius.circular(14)),
+                  color: cs.primaryContainer,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
                 ),
-                child: Icon(icon, color: color, size: 24),
+                child: Icon(
+                  Icons.medication_rounded,
+                  size: 22,
+                  color: cs.onPrimaryContainer,
+                ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      institution.name,
+                      rx.medicationDisplay,
                       style: tt.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: cs.onSurface,
@@ -214,61 +191,41 @@ class _InstitutionCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        if (institution.type != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.1),
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(20),
-                              ),
-                            ),
-                            child: Text(
-                              institution.type!,
-                              style: tt.labelSmall?.copyWith(
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Icon(
-                          Icons.person_rounded,
-                          size: 13,
-                          color: cs.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '$dc doctor${dc != 1 ? 's' : ''}',
-                          style: tt.labelSmall?.copyWith(
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 2),
+                    Text(
+                      rx.patientName,
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    if (institution.phone != null ||
-                        institution.address != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        institution.phone ?? institution.address ?? '',
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 4),
+                    Text(
+                      '${rx.dosage} · ${rx.frequency}',
+                      style: tt.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.7),
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
+              if (rx.status != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: const BorderRadius.all(Radius.circular(20)),
+                  ),
+                  child: Text(
+                    rx.status!,
+                    style: tt.labelSmall?.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -300,7 +257,7 @@ class _EmptyState extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.business_rounded,
+                Icons.medication_rounded,
                 size: 40,
                 color: cs.onPrimaryContainer,
               ),
@@ -308,19 +265,20 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               hasSearch
-                  ? 'No institutions match your search'
-                  : 'No institutions yet',
+                  ? 'No prescriptions match your search'
+                  : 'No prescriptions yet',
               style: tt.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: cs.onSurface,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             if (!hasSearch)
               FilledButton.icon(
-                onPressed: () => context.push('/institutions/new'),
+                onPressed: () => context.push('/prescriptions/new'),
                 icon: const Icon(Icons.add_rounded),
-                label: const Text('Add institution'),
+                label: const Text('Add prescription'),
               ),
           ],
         ),
@@ -348,7 +306,7 @@ class _ErrorState extends StatelessWidget {
             Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
             const SizedBox(height: 16),
             Text(
-              'Failed to load institutions',
+              'Failed to load prescriptions',
               style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),

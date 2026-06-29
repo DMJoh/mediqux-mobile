@@ -133,20 +133,28 @@ class _DashboardAppBar extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  firstName.isNotEmpty
-                      ? '$greeting, $firstName 👋'
-                      : '$greeting!',
-                  style: tt.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  dateStr,
-                  style: tt.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.75),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        firstName.isNotEmpty
+                            ? '$greeting, $firstName'
+                            : '$greeting!',
+                        style: tt.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        dateStr,
+                        style: tt.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.75),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

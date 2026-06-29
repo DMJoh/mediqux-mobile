@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/config/theme.dart';
+import 'package:mediqux_mobile/providers/auth_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
 import 'package:mediqux_mobile/widgets/mediqux_logo.dart';
 
@@ -17,6 +19,7 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
   final _urlController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _initialized = false;
 
   @override
   void dispose() {
@@ -71,13 +74,28 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
     }
 
     await ref.read(serverConfigProvider.notifier).setUrl(url);
-    // Router redirect handles navigation to /login.
+    if (!mounted) return;
+    final isLoggedIn = ref.read(authProvider).valueOrNull != null;
+    if (isLoggedIn) {
+      context.go('/');
+    }
+    // If not logged in, router redirect navigates to /login.
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final isLoggedIn = ref.watch(authProvider).valueOrNull != null;
+
+    // Pre-fill with the existing URL when opened from settings.
+    if (!_initialized) {
+      final existing = ref.read(serverConfigProvider).valueOrNull;
+      if (existing != null) {
+        _urlController.text = existing.replaceFirst(RegExp(r'/api$'), '');
+      }
+      _initialized = true;
+    }
 
     return Scaffold(
       body: Stack(
@@ -93,6 +111,14 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
           SafeArea(
             child: Column(
               children: [
+                if (isLoggedIn)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: BackButton(
+                      color: Colors.white,
+                      onPressed: () => context.pop(),
+                    ),
+                  ),
                 Expanded(
                   flex: 4,
                   child: Column(

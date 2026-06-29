@@ -2,48 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/config/theme.dart';
-import 'package:mediqux_mobile/models/institution/institution.dart';
-import 'package:mediqux_mobile/providers/institution_provider.dart';
-import 'package:mediqux_mobile/screens/institutions/institutions_list_screen.dart';
+import 'package:mediqux_mobile/models/doctor/doctor.dart';
+import 'package:mediqux_mobile/providers/doctor_provider.dart';
 
-class InstitutionDetailScreen extends ConsumerWidget {
-  const InstitutionDetailScreen({required this.institutionId, super.key});
+class DoctorDetailScreen extends ConsumerWidget {
+  const DoctorDetailScreen({required this.doctorId, super.key});
 
-  final String institutionId;
+  final String doctorId;
+
+  static const _palette = [
+    Color(0xFF2196F3),
+    Color(0xFF43A047),
+    Color(0xFFFF7043),
+    Color(0xFFAB47BC),
+    Color(0xFF00ACC1),
+    Color(0xFFFFB300),
+  ];
+
+  Color _avatarColor(String name) {
+    final sum = name.codeUnits.fold(0, (a, b) => a + b);
+    return _palette[sum % _palette.length];
+  }
 
   Future<void> _confirmDelete(
     BuildContext context,
     WidgetRef ref,
-    Institution institution,
+    Doctor doctor,
   ) async {
-    if (institution.doctorCount > 0) {
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Cannot delete'),
-          content: Text(
-            '"${institution.name}" has '
-            '${institution.doctorCount} associated '
-            'doctor${institution.doctorCount != 1 ? 's' : ''}. '
-            'Remove doctor associations first.',
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete institution?'),
+        title: const Text('Delete doctor?'),
         content: Text(
-          'Delete "${institution.name}"? '
+          'Delete "${doctor.fullName}"? '
           'This cannot be undone.',
         ),
         actions: [
@@ -62,20 +53,18 @@ class InstitutionDetailScreen extends ConsumerWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    await ref.read(institutionsProvider.notifier).delete(institution.id);
+    await ref.read(doctorsProvider.notifier).delete(doctor.id);
     if (context.mounted) context.pop();
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final institutionAsync = ref.watch(
-      institutionDetailProvider(institutionId),
-    );
+    final doctorAsync = ref.watch(doctorDetailProvider(doctorId));
 
     return Scaffold(
       backgroundColor: cs.surface,
-      body: institutionAsync.when(
+      body: doctorAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Column(
@@ -92,9 +81,8 @@ class InstitutionDetailScreen extends ConsumerWidget {
             ],
           ),
         ),
-        data: (institution) {
-          final color = institutionColor(institution.type);
-          final icon = institutionIcon(institution.type);
+        data: (doctor) {
+          final avatarColor = _avatarColor(doctor.fullName);
           return CustomScrollView(
             slivers: [
               SliverAppBar(
@@ -108,8 +96,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.edit_rounded, color: Colors.white),
                     tooltip: 'Edit',
-                    onPressed: () =>
-                        context.push('/institutions/${institution.id}/edit'),
+                    onPressed: () => context.push('/doctors/${doctor.id}/edit'),
                   ),
                   PopupMenuButton<String>(
                     icon: const Icon(
@@ -118,7 +105,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                     ),
                     onSelected: (v) {
                       if (v == 'delete') {
-                        _confirmDelete(context, ref, institution);
+                        _confirmDelete(context, ref, doctor);
                       }
                     },
                     itemBuilder: (_) => [
@@ -147,7 +134,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                     bottom: 16,
                   ),
                   title: Text(
-                    institution.name,
+                    doctor.fullName,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -162,16 +149,17 @@ class InstitutionDetailScreen extends ConsumerWidget {
                       gradient: AppTheme.headerGradient,
                     ),
                     child: Center(
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(20),
+                      child: CircleAvatar(
+                        radius: 36,
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        child: Text(
+                          doctor.initials,
+                          style: TextStyle(
+                            color: avatarColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 28,
                           ),
                         ),
-                        child: Icon(icon, color: Colors.white, size: 36),
                       ),
                     ),
                   ),
@@ -182,79 +170,39 @@ class InstitutionDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      if (institution.type != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: color.withValues(alpha: 0.1),
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(20),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(icon, color: color, size: 16),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      institution.type!,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelMedium
-                                          ?.copyWith(
-                                            color: color,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                      _InfoSection(
+                        title: 'Personal Info',
+                        rows: [
+                          _InfoRow(
+                            icon: Icons.medical_services_rounded,
+                            label: 'Specialty',
+                            value: doctor.specialty ?? '-',
                           ),
-                        ),
+                          _InfoRow(
+                            icon: Icons.badge_rounded,
+                            label: 'License',
+                            value: doctor.licenseNumber ?? '-',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
                       _InfoSection(
                         title: 'Contact',
                         rows: [
                           _InfoRow(
                             icon: Icons.phone_rounded,
                             label: 'Phone',
-                            value: institution.phone ?? '-',
+                            value: doctor.phone ?? '-',
                           ),
                           _InfoRow(
                             icon: Icons.email_rounded,
                             label: 'Email',
-                            value: institution.email ?? '-',
+                            value: doctor.email ?? '-',
                           ),
-                          if (institution.website != null)
-                            _InfoRow(
-                              icon: Icons.language_rounded,
-                              label: 'Website',
-                              value: institution.website!,
-                            ),
                         ],
                       ),
-                      if (institution.address != null) ...[
-                        const SizedBox(height: 12),
-                        _InfoSection(
-                          title: 'Address',
-                          rows: [
-                            _InfoRow(
-                              icon: Icons.location_on_rounded,
-                              label: 'Address',
-                              value: institution.address!,
-                            ),
-                          ],
-                        ),
-                      ],
                       const SizedBox(height: 12),
-                      _DoctorsSection(institution: institution),
+                      _InstitutionsSection(doctor: doctor),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -268,16 +216,16 @@ class InstitutionDetailScreen extends ConsumerWidget {
   }
 }
 
-class _DoctorsSection extends StatelessWidget {
-  const _DoctorsSection({required this.institution});
+class _InstitutionsSection extends StatelessWidget {
+  const _InstitutionsSection({required this.doctor});
 
-  final Institution institution;
+  final Doctor doctor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final doctors = institution.doctors ?? [];
+    final institutions = doctor.institutions ?? [];
 
     return Container(
       width: double.infinity,
@@ -292,7 +240,7 @@ class _DoctorsSection extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Associated Doctors',
+                'Institutions',
                 style: tt.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: cs.primary,
@@ -309,7 +257,7 @@ class _DoctorsSection extends StatelessWidget {
                   borderRadius: const BorderRadius.all(Radius.circular(20)),
                 ),
                 child: Text(
-                  '${doctors.length}',
+                  '${institutions.length}',
                   style: tt.labelSmall?.copyWith(
                     color: cs.onPrimaryContainer,
                     fontWeight: FontWeight.w700,
@@ -319,14 +267,14 @@ class _DoctorsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          if (doctors.isEmpty)
+          if (institutions.isEmpty)
             Text(
-              'No doctors assigned to this institution.',
+              'No institutions assigned.',
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             )
           else
-            ...doctors.map(
-              (d) => Padding(
+            ...institutions.map(
+              (inst) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   children: [
@@ -335,10 +283,12 @@ class _DoctorsSection extends StatelessWidget {
                       height: 36,
                       decoration: BoxDecoration(
                         color: cs.secondaryContainer,
-                        shape: BoxShape.circle,
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(10),
+                        ),
                       ),
                       child: Icon(
-                        Icons.person_rounded,
+                        Icons.business_rounded,
                         size: 18,
                         color: cs.onSecondaryContainer,
                       ),
@@ -349,17 +299,31 @@ class _DoctorsSection extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            d.fullName,
+                            inst.name,
                             style: tt.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: cs.onSurface,
                             ),
                           ),
-                          if (d.specialty != null)
-                            Text(
-                              d.specialty!,
-                              style: tt.labelSmall?.copyWith(
-                                color: cs.onSurfaceVariant,
+                          if (inst.type != null)
+                            Container(
+                              margin: const EdgeInsets.only(top: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: cs.tertiaryContainer,
+                                borderRadius: const BorderRadius.all(
+                                  Radius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                inst.type!,
+                                style: tt.labelSmall?.copyWith(
+                                  color: cs.onTertiaryContainer,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                         ],

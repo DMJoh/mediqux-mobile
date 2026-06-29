@@ -1,59 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mediqux_mobile/models/institution/institution.dart';
-import 'package:mediqux_mobile/providers/institution_provider.dart';
+import 'package:mediqux_mobile/models/doctor/doctor.dart';
+import 'package:mediqux_mobile/providers/doctor_provider.dart';
 import 'package:mediqux_mobile/widgets/app_drawer.dart';
 
-// Returns icon and color for a given institution type.
-IconData institutionIcon(String? type) {
-  switch (type?.toLowerCase()) {
-    case 'hospital':
-      return Icons.local_hospital_rounded;
-    case 'clinic':
-      return Icons.medical_services_rounded;
-    case 'laboratory':
-      return Icons.science_rounded;
-    case 'pharmacy':
-      return Icons.medication_rounded;
-    case 'diagnostic center':
-      return Icons.biotech_rounded;
-    case 'nursing home':
-      return Icons.elderly_rounded;
-    default:
-      return Icons.business_rounded;
-  }
-}
-
-Color institutionColor(String? type) {
-  switch (type?.toLowerCase()) {
-    case 'hospital':
-      return const Color(0xFFEF5350);
-    case 'clinic':
-      return const Color(0xFF2196F3);
-    case 'laboratory':
-      return const Color(0xFFAB47BC);
-    case 'pharmacy':
-      return const Color(0xFF43A047);
-    case 'diagnostic center':
-      return const Color(0xFFFF7043);
-    case 'nursing home':
-      return const Color(0xFF00ACC1);
-    default:
-      return const Color(0xFF607D8B);
-  }
-}
-
-class InstitutionsListScreen extends ConsumerStatefulWidget {
-  const InstitutionsListScreen({super.key});
+class DoctorsListScreen extends ConsumerStatefulWidget {
+  const DoctorsListScreen({super.key});
 
   @override
-  ConsumerState<InstitutionsListScreen> createState() =>
-      _InstitutionsListScreenState();
+  ConsumerState<DoctorsListScreen> createState() => _DoctorsListScreenState();
 }
 
-class _InstitutionsListScreenState
-    extends ConsumerState<InstitutionsListScreen> {
+class _DoctorsListScreenState extends ConsumerState<DoctorsListScreen> {
   bool _isSearching = false;
   final _searchCtrl = TextEditingController();
 
@@ -63,26 +22,26 @@ class _InstitutionsListScreenState
     super.dispose();
   }
 
-  List<Institution> _applySearch(List<Institution> institutions) {
+  List<Doctor> _applySearch(List<Doctor> doctors) {
     final q = _searchCtrl.text.trim().toLowerCase();
-    if (q.isEmpty) return institutions;
-    return institutions.where((i) {
-      return i.name.toLowerCase().contains(q) ||
-          (i.type?.toLowerCase().contains(q) ?? false) ||
-          (i.address?.toLowerCase().contains(q) ?? false) ||
-          (i.phone?.contains(q) ?? false) ||
-          (i.email?.toLowerCase().contains(q) ?? false);
+    if (q.isEmpty) return doctors;
+    return doctors.where((d) {
+      return d.firstName.toLowerCase().contains(q) ||
+          d.lastName.toLowerCase().contains(q) ||
+          (d.specialty?.toLowerCase().contains(q) ?? false) ||
+          (d.phone?.contains(q) ?? false) ||
+          (d.email?.toLowerCase().contains(q) ?? false);
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final institutionsAsync = ref.watch(institutionsProvider);
+    final doctorsAsync = ref.watch(doctorsProvider);
 
     return Scaffold(
       backgroundColor: cs.surface,
-      drawer: const AppDrawer(currentRoute: '/institutions'),
+      drawer: const AppDrawer(currentRoute: '/doctors'),
       appBar: AppBar(
         backgroundColor: cs.surface,
         elevation: 0,
@@ -106,14 +65,14 @@ class _InstitutionsListScreenState
                 controller: _searchCtrl,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  hintText: 'Search institutions...',
+                  hintText: 'Search doctors...',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
                 ),
                 onChanged: (_) => setState(() {}),
               )
             : Text(
-                'Institutions',
+                'Doctors',
                 style: TextStyle(
                   color: cs.onSurface,
                   fontWeight: FontWeight.w700,
@@ -138,11 +97,11 @@ class _InstitutionsListScreenState
             ),
         ],
       ),
-      body: institutionsAsync.when(
+      body: doctorsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           message: e.toString(),
-          onRetry: () => ref.read(institutionsProvider.notifier).refresh(),
+          onRetry: () => ref.read(doctorsProvider.notifier).refresh(),
         ),
         data: (list) {
           final filtered = _applySearch(list);
@@ -150,55 +109,75 @@ class _InstitutionsListScreenState
             return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
           }
           return RefreshIndicator(
-            onRefresh: () => ref.read(institutionsProvider.notifier).refresh(),
+            onRefresh: () => ref.read(doctorsProvider.notifier).refresh(),
             color: cs.primary,
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) => _InstitutionCard(institution: filtered[i]),
+              itemBuilder: (_, i) => _DoctorCard(doctor: filtered[i]),
             ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/institutions/new'),
-        tooltip: 'Add institution',
+        onPressed: () => context.push('/doctors/new'),
+        tooltip: 'Add doctor',
         child: const Icon(Icons.add_rounded),
       ),
     );
   }
 }
 
-class _InstitutionCard extends StatelessWidget {
-  const _InstitutionCard({required this.institution});
+class _DoctorCard extends StatelessWidget {
+  const _DoctorCard({required this.doctor});
 
-  final Institution institution;
+  final Doctor doctor;
+
+  static const _palette = [
+    Color(0xFF2196F3),
+    Color(0xFF43A047),
+    Color(0xFFFF7043),
+    Color(0xFFAB47BC),
+    Color(0xFF00ACC1),
+    Color(0xFFFFB300),
+  ];
+
+  Color _avatarColor(String name) {
+    final sum = name.codeUnits.fold(0, (a, b) => a + b);
+    return _palette[sum % _palette.length];
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final color = institutionColor(institution.type);
-    final icon = institutionIcon(institution.type);
-    final dc = institution.doctorCount;
+    final color = _avatarColor(doctor.fullName);
+
+    final subtitle =
+        doctor.phone ??
+        ((doctor.institutions?.isNotEmpty ?? false)
+            ? doctor.institutions!.first.name
+            : null);
 
     return Card(
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(16)),
-        onTap: () => context.push('/institutions/${institution.id}'),
+        onTap: () => context.push('/doctors/${doctor.id}'),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: const BorderRadius.all(Radius.circular(14)),
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: color.withValues(alpha: 0.15),
+                child: Text(
+                  doctor.initials,
+                  style: tt.titleMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -206,7 +185,7 @@ class _InstitutionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      institution.name,
+                      doctor.fullName,
                       style: tt.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: cs.onSurface,
@@ -214,50 +193,19 @@ class _InstitutionCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        if (institution.type != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.1),
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(20),
-                              ),
-                            ),
-                            child: Text(
-                              institution.type!,
-                              style: tt.labelSmall?.copyWith(
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Icon(
-                          Icons.person_rounded,
-                          size: 13,
+                    if (doctor.specialty != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        doctor.specialty!,
+                        style: tt.bodySmall?.copyWith(
                           color: cs.onSurfaceVariant,
                         ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '$dc doctor${dc != 1 ? 's' : ''}',
-                          style: tt.labelSmall?.copyWith(
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (institution.phone != null ||
-                        institution.address != null) ...[
-                      const SizedBox(height: 3),
+                      ),
+                    ],
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
                       Text(
-                        institution.phone ?? institution.address ?? '',
+                        subtitle,
                         style: tt.bodySmall?.copyWith(
                           color: cs.onSurfaceVariant.withValues(alpha: 0.7),
                         ),
@@ -300,16 +248,14 @@ class _EmptyState extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.business_rounded,
+                Icons.person_rounded,
                 size: 40,
                 color: cs.onPrimaryContainer,
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              hasSearch
-                  ? 'No institutions match your search'
-                  : 'No institutions yet',
+              hasSearch ? 'No doctors match your search' : 'No doctors yet',
               style: tt.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: cs.onSurface,
@@ -318,9 +264,9 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             if (!hasSearch)
               FilledButton.icon(
-                onPressed: () => context.push('/institutions/new'),
+                onPressed: () => context.push('/doctors/new'),
                 icon: const Icon(Icons.add_rounded),
-                label: const Text('Add institution'),
+                label: const Text('Add doctor'),
               ),
           ],
         ),
@@ -348,7 +294,7 @@ class _ErrorState extends StatelessWidget {
             Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
             const SizedBox(height: 16),
             Text(
-              'Failed to load institutions',
+              'Failed to load doctors',
               style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),

@@ -2,48 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/config/theme.dart';
-import 'package:mediqux_mobile/models/institution/institution.dart';
-import 'package:mediqux_mobile/providers/institution_provider.dart';
-import 'package:mediqux_mobile/screens/institutions/institutions_list_screen.dart';
+import 'package:mediqux_mobile/models/medication/medication.dart';
+import 'package:mediqux_mobile/providers/medication_provider.dart';
 
-class InstitutionDetailScreen extends ConsumerWidget {
-  const InstitutionDetailScreen({required this.institutionId, super.key});
+class MedicationDetailScreen extends ConsumerWidget {
+  const MedicationDetailScreen({required this.medicationId, super.key});
 
-  final String institutionId;
+  final String medicationId;
 
   Future<void> _confirmDelete(
     BuildContext context,
     WidgetRef ref,
-    Institution institution,
+    Medication medication,
   ) async {
-    if (institution.doctorCount > 0) {
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Cannot delete'),
-          content: Text(
-            '"${institution.name}" has '
-            '${institution.doctorCount} associated '
-            'doctor${institution.doctorCount != 1 ? 's' : ''}. '
-            'Remove doctor associations first.',
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete institution?'),
+        title: const Text('Delete medication?'),
         content: Text(
-          'Delete "${institution.name}"? '
+          'Delete "${medication.name}"? '
           'This cannot be undone.',
         ),
         actions: [
@@ -62,20 +39,27 @@ class InstitutionDetailScreen extends ConsumerWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    await ref.read(institutionsProvider.notifier).delete(institution.id);
-    if (context.mounted) context.pop();
+    try {
+      await ref.read(medicationsProvider.notifier).delete(medication.id);
+      if (context.mounted) context.pop();
+    } on Object catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final institutionAsync = ref.watch(
-      institutionDetailProvider(institutionId),
-    );
+    final tt = Theme.of(context).textTheme;
+    final medicationAsync = ref.watch(medicationDetailProvider(medicationId));
 
     return Scaffold(
       backgroundColor: cs.surface,
-      body: institutionAsync.when(
+      body: medicationAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Column(
@@ -92,9 +76,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
             ],
           ),
         ),
-        data: (institution) {
-          final color = institutionColor(institution.type);
-          final icon = institutionIcon(institution.type);
+        data: (medication) {
           return CustomScrollView(
             slivers: [
               SliverAppBar(
@@ -109,7 +91,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                     icon: const Icon(Icons.edit_rounded, color: Colors.white),
                     tooltip: 'Edit',
                     onPressed: () =>
-                        context.push('/institutions/${institution.id}/edit'),
+                        context.push('/medications/${medication.id}/edit'),
                   ),
                   PopupMenuButton<String>(
                     icon: const Icon(
@@ -118,7 +100,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                     ),
                     onSelected: (v) {
                       if (v == 'delete') {
-                        _confirmDelete(context, ref, institution);
+                        _confirmDelete(context, ref, medication);
                       }
                     },
                     itemBuilder: (_) => [
@@ -147,7 +129,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                     bottom: 16,
                   ),
                   title: Text(
-                    institution.name,
+                    medication.name,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -171,7 +153,11 @@ class InstitutionDetailScreen extends ConsumerWidget {
                             Radius.circular(20),
                           ),
                         ),
-                        child: Icon(icon, color: Colors.white, size: 36),
+                        child: const Icon(
+                          Icons.medication_rounded,
+                          color: Colors.white,
+                          size: 36,
+                        ),
                       ),
                     ),
                   ),
@@ -182,79 +168,80 @@ class InstitutionDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      if (institution.type != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Row(
+                      _InfoSection(
+                        title: 'Drug Info',
+                        rows: [
+                          if (medication.genericName != null)
+                            _InfoRow(
+                              icon: Icons.science_rounded,
+                              label: 'Generic',
+                              value: medication.genericName!,
+                            ),
+                          if (medication.manufacturer != null)
+                            _InfoRow(
+                              icon: Icons.factory_rounded,
+                              label: 'Manufacturer',
+                              value: medication.manufacturer!,
+                            ),
+                          _InfoRow(
+                            icon: Icons.bar_chart_rounded,
+                            label: 'Prescriptions',
+                            value: '${medication.prescriptionCount}',
+                          ),
+                          _InfoRow(
+                            icon: Icons.people_rounded,
+                            label: 'Patients',
+                            value: '${medication.patientMedicationCount}',
+                          ),
+                        ],
+                      ),
+                      if (medication.description != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerLow,
+                            borderRadius: const BorderRadius.all(
+                              Radius.circular(16),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
+                              Text(
+                                'Description',
+                                style: tt.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.primary,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: color.withValues(alpha: 0.1),
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(20),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(icon, color: color, size: 16),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      institution.type!,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelMedium
-                                          ?.copyWith(
-                                            color: color,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                    ),
-                                  ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                medication.description!,
+                                style: tt.bodySmall?.copyWith(
+                                  color: cs.onSurface,
+                                  height: 1.5,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      _InfoSection(
-                        title: 'Contact',
-                        rows: [
-                          _InfoRow(
-                            icon: Icons.phone_rounded,
-                            label: 'Phone',
-                            value: institution.phone ?? '-',
-                          ),
-                          _InfoRow(
-                            icon: Icons.email_rounded,
-                            label: 'Email',
-                            value: institution.email ?? '-',
-                          ),
-                          if (institution.website != null)
-                            _InfoRow(
-                              icon: Icons.language_rounded,
-                              label: 'Website',
-                              value: institution.website!,
-                            ),
-                        ],
-                      ),
-                      if (institution.address != null) ...[
+                      ],
+                      if (medication.dosageForms.isNotEmpty) ...[
                         const SizedBox(height: 12),
-                        _InfoSection(
-                          title: 'Address',
-                          rows: [
-                            _InfoRow(
-                              icon: Icons.location_on_rounded,
-                              label: 'Address',
-                              value: institution.address!,
-                            ),
-                          ],
+                        _ChipsSection(
+                          title: 'Dosage Forms',
+                          items: medication.dosageForms,
                         ),
                       ],
-                      const SizedBox(height: 12),
-                      _DoctorsSection(institution: institution),
+                      if (medication.strengths.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _ChipsSection(
+                          title: 'Strengths',
+                          items: medication.strengths,
+                        ),
+                      ],
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -268,17 +255,16 @@ class InstitutionDetailScreen extends ConsumerWidget {
   }
 }
 
-class _DoctorsSection extends StatelessWidget {
-  const _DoctorsSection({required this.institution});
+class _ChipsSection extends StatelessWidget {
+  const _ChipsSection({required this.title, required this.items});
 
-  final Institution institution;
+  final String title;
+  final List<String> items;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final doctors = institution.doctors ?? [];
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -289,86 +275,39 @@ class _DoctorsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Associated Doctors',
-                style: tt.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: cs.primary,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: const BorderRadius.all(Radius.circular(20)),
-                ),
-                child: Text(
-                  '${doctors.length}',
-                  style: tt.labelSmall?.copyWith(
-                    color: cs.onPrimaryContainer,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (doctors.isEmpty)
-            Text(
-              'No doctors assigned to this institution.',
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-            )
-          else
-            ...doctors.map(
-              (d) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: cs.secondaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.person_rounded,
-                        size: 18,
-                        color: cs.onSecondaryContainer,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            d.fullName,
-                            style: tt.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: cs.onSurface,
-                            ),
-                          ),
-                          if (d.specialty != null)
-                            Text(
-                              d.specialty!,
-                              style: tt.labelSmall?.copyWith(
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          Text(
+            title,
+            style: tt.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: cs.primary,
             ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: items
+                .map(
+                  (item) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer,
+                      borderRadius: const BorderRadius.all(Radius.circular(20)),
+                    ),
+                    child: Text(
+                      item,
+                      style: tt.labelMedium?.copyWith(
+                        color: cs.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
         ],
       ),
     );
@@ -433,7 +372,7 @@ class _InfoRow extends StatelessWidget {
           Icon(icon, size: 16, color: cs.onSurfaceVariant),
           const SizedBox(width: 8),
           SizedBox(
-            width: 70,
+            width: 90,
             child: Text(
               label,
               style: tt.bodySmall?.copyWith(

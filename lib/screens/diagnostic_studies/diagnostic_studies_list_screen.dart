@@ -1,59 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mediqux_mobile/models/institution/institution.dart';
-import 'package:mediqux_mobile/providers/institution_provider.dart';
+import 'package:intl/intl.dart';
+import 'package:mediqux_mobile/models/diagnostic_study/diagnostic_study.dart';
+import 'package:mediqux_mobile/providers/diagnostic_study_provider.dart';
 import 'package:mediqux_mobile/widgets/app_drawer.dart';
 
-// Returns icon and color for a given institution type.
-IconData institutionIcon(String? type) {
-  switch (type?.toLowerCase()) {
-    case 'hospital':
-      return Icons.local_hospital_rounded;
-    case 'clinic':
-      return Icons.medical_services_rounded;
-    case 'laboratory':
-      return Icons.science_rounded;
-    case 'pharmacy':
-      return Icons.medication_rounded;
-    case 'diagnostic center':
-      return Icons.biotech_rounded;
-    case 'nursing home':
-      return Icons.elderly_rounded;
-    default:
-      return Icons.business_rounded;
-  }
-}
-
-Color institutionColor(String? type) {
-  switch (type?.toLowerCase()) {
-    case 'hospital':
-      return const Color(0xFFEF5350);
-    case 'clinic':
-      return const Color(0xFF2196F3);
-    case 'laboratory':
-      return const Color(0xFFAB47BC);
-    case 'pharmacy':
-      return const Color(0xFF43A047);
-    case 'diagnostic center':
-      return const Color(0xFFFF7043);
-    case 'nursing home':
-      return const Color(0xFF00ACC1);
-    default:
-      return const Color(0xFF607D8B);
-  }
-}
-
-class InstitutionsListScreen extends ConsumerStatefulWidget {
-  const InstitutionsListScreen({super.key});
+class DiagnosticStudiesListScreen extends ConsumerStatefulWidget {
+  const DiagnosticStudiesListScreen({super.key});
 
   @override
-  ConsumerState<InstitutionsListScreen> createState() =>
-      _InstitutionsListScreenState();
+  ConsumerState<DiagnosticStudiesListScreen> createState() =>
+      _DiagnosticStudiesListScreenState();
 }
 
-class _InstitutionsListScreenState
-    extends ConsumerState<InstitutionsListScreen> {
+class _DiagnosticStudiesListScreenState
+    extends ConsumerState<DiagnosticStudiesListScreen> {
   bool _isSearching = false;
   final _searchCtrl = TextEditingController();
 
@@ -63,26 +25,38 @@ class _InstitutionsListScreenState
     super.dispose();
   }
 
-  List<Institution> _applySearch(List<Institution> institutions) {
+  List<DiagnosticStudy> _applySearch(List<DiagnosticStudy> items) {
     final q = _searchCtrl.text.trim().toLowerCase();
-    if (q.isEmpty) return institutions;
-    return institutions.where((i) {
-      return i.name.toLowerCase().contains(q) ||
-          (i.type?.toLowerCase().contains(q) ?? false) ||
-          (i.address?.toLowerCase().contains(q) ?? false) ||
-          (i.phone?.contains(q) ?? false) ||
-          (i.email?.toLowerCase().contains(q) ?? false);
+    if (q.isEmpty) return items;
+    return items.where((s) {
+      return s.studyType.toLowerCase().contains(q) ||
+          s.patientName.toLowerCase().contains(q) ||
+          (s.bodyRegion?.toLowerCase().contains(q) ?? false);
     }).toList();
+  }
+
+  IconData _studyIcon(String studyType) {
+    switch (studyType) {
+      case 'Echocardiogram':
+        return Icons.favorite_rounded;
+      case 'X-Ray':
+      case 'CT Scan':
+      case 'MRI':
+      case 'Ultrasound':
+        return Icons.medical_information_rounded;
+      default:
+        return Icons.document_scanner_rounded;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final institutionsAsync = ref.watch(institutionsProvider);
+    final studiesAsync = ref.watch(diagnosticStudiesProvider);
 
     return Scaffold(
       backgroundColor: cs.surface,
-      drawer: const AppDrawer(currentRoute: '/institutions'),
+      drawer: const AppDrawer(currentRoute: '/diagnostic-studies'),
       appBar: AppBar(
         backgroundColor: cs.surface,
         elevation: 0,
@@ -106,14 +80,14 @@ class _InstitutionsListScreenState
                 controller: _searchCtrl,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  hintText: 'Search institutions...',
+                  hintText: 'Search studies...',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
                 ),
                 onChanged: (_) => setState(() {}),
               )
             : Text(
-                'Institutions',
+                'Diagnostic Studies',
                 style: TextStyle(
                   color: cs.onSurface,
                   fontWeight: FontWeight.w700,
@@ -138,11 +112,11 @@ class _InstitutionsListScreenState
             ),
         ],
       ),
-      body: institutionsAsync.when(
+      body: studiesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
           message: e.toString(),
-          onRetry: () => ref.read(institutionsProvider.notifier).refresh(),
+          onRetry: () => ref.read(diagnosticStudiesProvider.notifier).refresh(),
         ),
         data: (list) {
           final filtered = _applySearch(list);
@@ -150,121 +124,100 @@ class _InstitutionsListScreenState
             return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
           }
           return RefreshIndicator(
-            onRefresh: () => ref.read(institutionsProvider.notifier).refresh(),
+            onRefresh: () =>
+                ref.read(diagnosticStudiesProvider.notifier).refresh(),
             color: cs.primary,
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) => _InstitutionCard(institution: filtered[i]),
+              itemBuilder: (_, i) => _StudyCard(
+                study: filtered[i],
+                studyIcon: _studyIcon(filtered[i].studyType),
+              ),
             ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/institutions/new'),
-        tooltip: 'Add institution',
+        onPressed: () => context.push('/diagnostic-studies/new'),
+        tooltip: 'Add diagnostic study',
         child: const Icon(Icons.add_rounded),
       ),
     );
   }
 }
 
-class _InstitutionCard extends StatelessWidget {
-  const _InstitutionCard({required this.institution});
+class _StudyCard extends StatelessWidget {
+  const _StudyCard({required this.study, required this.studyIcon});
 
-  final Institution institution;
+  final DiagnosticStudy study;
+  final IconData studyIcon;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final color = institutionColor(institution.type);
-    final icon = institutionIcon(institution.type);
-    final dc = institution.doctorCount;
+    final dateFmt = DateFormat('MMM d, yyyy');
 
     return Card(
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(16)),
-        onTap: () => context.push('/institutions/${institution.id}'),
+        onTap: () => context.push('/diagnostic-studies/${study.id}'),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: const BorderRadius.all(Radius.circular(14)),
+                  color: cs.primaryContainer,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
                 ),
-                child: Icon(icon, color: color, size: 24),
+                child: Icon(studyIcon, size: 22, color: cs.onPrimaryContainer),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      institution.name,
-                      style: tt.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
                     Row(
                       children: [
-                        if (institution.type != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
+                        Expanded(
+                          child: Text(
+                            study.bodyRegion != null
+                                ? '${study.studyType} – '
+                                      '${study.bodyRegion}'
+                                : study.studyType,
+                            style: tt.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: cs.onSurface,
                             ),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.1),
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(20),
-                              ),
-                            ),
-                            child: Text(
-                              institution.type!,
-                              style: tt.labelSmall?.copyWith(
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Icon(
-                          Icons.person_rounded,
-                          size: 13,
-                          color: cs.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '$dc doctor${dc != 1 ? 's' : ''}',
-                          style: tt.labelSmall?.copyWith(
-                            color: cs.onSurfaceVariant,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        if (study.hasAttachment)
+                          Icon(
+                            Icons.attach_file_rounded,
+                            size: 16,
+                            color: cs.primary,
+                          ),
                       ],
                     ),
-                    if (institution.phone != null ||
-                        institution.address != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        institution.phone ?? institution.address ?? '',
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 2),
+                    Text(
+                      study.patientName,
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      dateFmt.format(study.studyDate),
+                      style: tt.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.7),
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
@@ -300,7 +253,7 @@ class _EmptyState extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.business_rounded,
+                Icons.document_scanner_rounded,
                 size: 40,
                 color: cs.onPrimaryContainer,
               ),
@@ -308,19 +261,20 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               hasSearch
-                  ? 'No institutions match your search'
-                  : 'No institutions yet',
+                  ? 'No studies match your search'
+                  : 'No diagnostic studies yet',
               style: tt.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: cs.onSurface,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             if (!hasSearch)
               FilledButton.icon(
-                onPressed: () => context.push('/institutions/new'),
+                onPressed: () => context.push('/diagnostic-studies/new'),
                 icon: const Icon(Icons.add_rounded),
-                label: const Text('Add institution'),
+                label: const Text('Add study'),
               ),
           ],
         ),
@@ -348,7 +302,7 @@ class _ErrorState extends StatelessWidget {
             Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
             const SizedBox(height: 16),
             Text(
-              'Failed to load institutions',
+              'Failed to load studies',
               style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
