@@ -24,14 +24,15 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: const Color(0xFFF4F7FF),
       textTheme: GoogleFonts.interTextTheme(base.textTheme),
       appBarTheme: AppBarTheme(
-        systemOverlayStyle: SystemUiOverlayStyle.light,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.white,
+        foregroundColor: cs.onSurface,
+        iconTheme: IconThemeData(color: cs.onSurface),
         titleTextStyle: GoogleFonts.inter(
           fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: Colors.white,
+          color: cs.onSurface,
         ),
       ),
       cardTheme: CardThemeData(
