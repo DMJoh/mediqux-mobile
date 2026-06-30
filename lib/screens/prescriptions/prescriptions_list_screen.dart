@@ -110,21 +110,39 @@ class _PrescriptionsListScreenState
             ),
         ],
       ),
-      body: rxAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorState(
-          message: e.toString(),
-          onRetry: () => ref.read(prescriptionsProvider.notifier).refresh(),
-        ),
-        data: (list) {
-          final filtered = _applySearch(list);
-          if (filtered.isEmpty) {
-            return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
-          }
-          return RefreshIndicator(
-            onRefresh: () => ref.read(prescriptionsProvider.notifier).refresh(),
-            color: cs.primary,
-            child: ListView.separated(
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(prescriptionsProvider.notifier).refresh(),
+        color: cs.primary,
+        child: rxAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverFillRemaining(
+                child: _ErrorState(
+                  message: e.toString(),
+                  onRetry: () =>
+                      ref.read(prescriptionsProvider.notifier).refresh(),
+                ),
+              ),
+            ],
+          ),
+          data: (list) {
+            final filtered = _applySearch(list);
+            if (filtered.isEmpty) {
+              return CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverFillRemaining(
+                    child: _EmptyState(
+                      hasSearch: _searchCtrl.text.isNotEmpty,
+                    ),
+                  ),
+                ],
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -132,9 +150,9 @@ class _PrescriptionsListScreenState
                 rx: filtered[i],
                 statusColor: _statusColor(context, filtered[i].status),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/prescriptions/new'),

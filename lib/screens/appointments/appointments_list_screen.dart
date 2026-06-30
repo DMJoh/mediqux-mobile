@@ -111,21 +111,39 @@ class _AppointmentsListScreenState
             ),
         ],
       ),
-      body: aptsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorState(
-          message: e.toString(),
-          onRetry: () => ref.read(appointmentsProvider.notifier).refresh(),
-        ),
-        data: (list) {
-          final filtered = _applySearch(list);
-          if (filtered.isEmpty) {
-            return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
-          }
-          return RefreshIndicator(
-            onRefresh: () => ref.read(appointmentsProvider.notifier).refresh(),
-            color: cs.primary,
-            child: ListView.separated(
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(appointmentsProvider.notifier).refresh(),
+        color: cs.primary,
+        child: aptsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverFillRemaining(
+                child: _ErrorState(
+                  message: e.toString(),
+                  onRetry: () =>
+                      ref.read(appointmentsProvider.notifier).refresh(),
+                ),
+              ),
+            ],
+          ),
+          data: (list) {
+            final filtered = _applySearch(list);
+            if (filtered.isEmpty) {
+              return CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverFillRemaining(
+                    child: _EmptyState(
+                      hasSearch: _searchCtrl.text.isNotEmpty,
+                    ),
+                  ),
+                ],
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -133,9 +151,9 @@ class _AppointmentsListScreenState
                 appointment: filtered[i],
                 statusColor: _statusColor(context, filtered[i].status),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/appointments/new'),

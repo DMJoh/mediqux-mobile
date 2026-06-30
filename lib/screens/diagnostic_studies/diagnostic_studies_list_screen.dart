@@ -112,22 +112,40 @@ class _DiagnosticStudiesListScreenState
             ),
         ],
       ),
-      body: studiesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorState(
-          message: e.toString(),
-          onRetry: () => ref.read(diagnosticStudiesProvider.notifier).refresh(),
-        ),
-        data: (list) {
-          final filtered = _applySearch(list);
-          if (filtered.isEmpty) {
-            return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
-          }
-          return RefreshIndicator(
-            onRefresh: () =>
-                ref.read(diagnosticStudiesProvider.notifier).refresh(),
-            color: cs.primary,
-            child: ListView.separated(
+      body: RefreshIndicator(
+        onRefresh: () =>
+            ref.read(diagnosticStudiesProvider.notifier).refresh(),
+        color: cs.primary,
+        child: studiesAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverFillRemaining(
+                child: _ErrorState(
+                  message: e.toString(),
+                  onRetry: () =>
+                      ref.read(diagnosticStudiesProvider.notifier).refresh(),
+                ),
+              ),
+            ],
+          ),
+          data: (list) {
+            final filtered = _applySearch(list);
+            if (filtered.isEmpty) {
+              return CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverFillRemaining(
+                    child: _EmptyState(
+                      hasSearch: _searchCtrl.text.isNotEmpty,
+                    ),
+                  ),
+                ],
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -135,9 +153,9 @@ class _DiagnosticStudiesListScreenState
                 study: filtered[i],
                 studyIcon: _studyIcon(filtered[i].studyType),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/diagnostic-studies/new'),
