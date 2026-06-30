@@ -55,7 +55,10 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
       final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
       final tmpDir = await getTemporaryDirectory();
       final tmpPath = '${tmpDir.path}/mediqux_study_$studyId.pdf';
-      await dio.download('$serverUrl/diagnostic-studies/$studyId/view', tmpPath);
+      await dio.download(
+        '$serverUrl/diagnostic-studies/$studyId/view',
+        tmpPath,
+      );
       final result = await OpenFile.open(tmpPath);
       if (result.type != ResultType.done && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -64,9 +67,9 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
       }
     } on Exception catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to download: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to download: $e')));
       }
     }
   }
@@ -271,11 +274,8 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
                       if (study.hasAttachment) ...[
                         const SizedBox(height: 16),
                         FilledButton.icon(
-                          onPressed: () => _openAttachment(
-                            context,
-                            ref,
-                            study.id,
-                          ),
+                          onPressed: () =>
+                              _openAttachment(context, ref, study.id),
                           icon: const Icon(Icons.open_in_new_rounded),
                           label: const Text('View Attachment'),
                           style: FilledButton.styleFrom(

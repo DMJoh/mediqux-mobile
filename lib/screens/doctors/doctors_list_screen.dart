@@ -108,8 +108,7 @@ class _DoctorsListScreenState extends ConsumerState<DoctorsListScreen> {
               SliverFillRemaining(
                 child: _ErrorState(
                   message: e.toString(),
-                  onRetry: () =>
-                      ref.read(doctorsProvider.notifier).refresh(),
+                  onRetry: () => ref.read(doctorsProvider.notifier).refresh(),
                 ),
               ),
             ],
@@ -121,9 +120,7 @@ class _DoctorsListScreenState extends ConsumerState<DoctorsListScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverFillRemaining(
-                    child: _EmptyState(
-                      hasSearch: _searchCtrl.text.isNotEmpty,
-                    ),
+                    child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
                   ),
                 ],
               );

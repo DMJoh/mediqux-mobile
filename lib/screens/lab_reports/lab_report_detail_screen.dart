@@ -64,9 +64,9 @@ class LabReportDetailScreen extends ConsumerWidget {
       }
     } on Exception catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to download: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to download: $e')));
       }
     }
   }
@@ -225,8 +225,7 @@ class LabReportDetailScreen extends ConsumerWidget {
                       if (report.hasFile) ...[
                         const SizedBox(height: 16),
                         FilledButton.icon(
-                          onPressed: () =>
-                              _openFile(context, ref, report.id),
+                          onPressed: () => _openFile(context, ref, report.id),
                           icon: const Icon(Icons.open_in_new_rounded),
                           label: const Text('View Report'),
                           style: FilledButton.styleFrom(

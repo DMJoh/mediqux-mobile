@@ -107,8 +107,7 @@ class _PatientsListScreenState extends ConsumerState<PatientsListScreen> {
               SliverFillRemaining(
                 child: _ErrorState(
                   message: e.toString(),
-                  onRetry: () =>
-                      ref.read(patientsProvider.notifier).refresh(),
+                  onRetry: () => ref.read(patientsProvider.notifier).refresh(),
                 ),
               ),
             ],

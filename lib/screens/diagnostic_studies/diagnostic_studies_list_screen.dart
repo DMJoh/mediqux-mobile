@@ -113,8 +113,7 @@ class _DiagnosticStudiesListScreenState
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () =>
-            ref.read(diagnosticStudiesProvider.notifier).refresh(),
+        onRefresh: () => ref.read(diagnosticStudiesProvider.notifier).refresh(),
         color: cs.primary,
         child: studiesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -137,9 +136,7 @@ class _DiagnosticStudiesListScreenState
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverFillRemaining(
-                    child: _EmptyState(
-                      hasSearch: _searchCtrl.text.isNotEmpty,
-                    ),
+                    child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
                   ),
                 ],
               );

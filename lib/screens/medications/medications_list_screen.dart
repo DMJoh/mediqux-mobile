@@ -120,9 +120,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverFillRemaining(
-                    child: _EmptyState(
-                      hasSearch: _searchCtrl.text.isNotEmpty,
-                    ),
+                    child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
                   ),
                 ],
               );
@@ -132,8 +130,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) =>
-                  _MedicationCard(medication: filtered[i]),
+              itemBuilder: (_, i) => _MedicationCard(medication: filtered[i]),
             );
           },
         ),

@@ -134,9 +134,7 @@ class _LabReportsListScreenState extends ConsumerState<LabReportsListScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverFillRemaining(
-                    child: _EmptyState(
-                      hasSearch: _searchCtrl.text.isNotEmpty,
-                    ),
+                    child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
                   ),
                 ],
               );
