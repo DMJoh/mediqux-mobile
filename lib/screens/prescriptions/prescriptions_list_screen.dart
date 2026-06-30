@@ -119,6 +119,7 @@ class _PrescriptionsListScreenState
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverFillRemaining(
+                hasScrollBody: false,
                 child: _ErrorState(
                   message: e.toString(),
                   onRetry: () =>
@@ -134,6 +135,7 @@ class _PrescriptionsListScreenState
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverFillRemaining(
+                    hasScrollBody: false,
                     child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
                   ),
                 ],

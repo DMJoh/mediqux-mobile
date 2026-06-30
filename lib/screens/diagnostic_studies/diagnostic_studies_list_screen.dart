@@ -121,6 +121,7 @@ class _DiagnosticStudiesListScreenState
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverFillRemaining(
+                hasScrollBody: false,
                 child: _ErrorState(
                   message: e.toString(),
                   onRetry: () =>
@@ -136,6 +137,7 @@ class _DiagnosticStudiesListScreenState
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverFillRemaining(
+                    hasScrollBody: false,
                     child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
                   ),
                 ],

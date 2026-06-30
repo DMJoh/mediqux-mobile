@@ -105,6 +105,7 @@ class _PatientsListScreenState extends ConsumerState<PatientsListScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverFillRemaining(
+                hasScrollBody: false,
                 child: _ErrorState(
                   message: e.toString(),
                   onRetry: () => ref.read(patientsProvider.notifier).refresh(),
@@ -119,6 +120,7 @@ class _PatientsListScreenState extends ConsumerState<PatientsListScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverFillRemaining(
+                    hasScrollBody: false,
                     child: _EmptyState(
                       hasSearch: _searchController.text.isNotEmpty,
                     ),
