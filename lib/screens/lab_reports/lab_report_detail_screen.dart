@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/lab_report/lab_report.dart';
+import 'package:mediqux_mobile/providers/dio_provider.dart';
 import 'package:mediqux_mobile/providers/lab_report_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 class LabReportDetailScreen extends ConsumerWidget {
   const LabReportDetailScreen({required this.reportId, super.key});
@@ -46,18 +48,26 @@ class LabReportDetailScreen extends ConsumerWidget {
   Future<void> _openFile(
     BuildContext context,
     WidgetRef ref,
-    String filePath,
+    String reportId,
   ) async {
-    final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
-    final baseUrl = serverUrl.replaceFirst(RegExp(r'/api$'), '');
-    final fileUrl = '$baseUrl/$filePath';
-    final uri = Uri.parse(fileUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Cannot open: $fileUrl')));
+    try {
+      final dio = ref.read(dioProvider);
+      final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+      final tmpDir = await getTemporaryDirectory();
+      final tmpPath = '${tmpDir.path}/mediqux_report_$reportId.pdf';
+      await dio.download('$serverUrl/test-results/$reportId/view', tmpPath);
+      final result = await OpenFile.open(tmpPath);
+      if (result.type != ResultType.done && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Cannot open PDF: ${result.message}')),
+        );
+      }
+    } on Exception catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to download: $e')),
+        );
+      }
     }
   }
 
@@ -148,6 +158,18 @@ class LabReportDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
+                      // Patient
+                      _InfoSection(
+                        title: 'Patient',
+                        rows: [
+                          _InfoRow(
+                            icon: Icons.person_rounded,
+                            label: 'Name',
+                            value: report.patientName,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
                       // Test info
                       _InfoSection(
                         title: 'Test Info',
@@ -162,26 +184,19 @@ class LabReportDetailScreen extends ConsumerWidget {
                             label: 'Date',
                             value: dateFmt.format(report.testDate),
                           ),
-                          if (report.status != null)
+                          if (report.testType != null)
                             _InfoRow(
-                              icon: Icons.circle,
-                              label: 'Status',
-                              value: report.status!,
+                              icon: Icons.category_rounded,
+                              label: 'Type',
+                              value: report.testType!,
                             ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      // Patient
-                      _InfoSection(
-                        title: 'Patient',
-                        rows: [
-                          _InfoRow(
-                            icon: Icons.person_rounded,
-                            label: 'Name',
-                            value: report.patientName,
-                          ),
-                        ],
-                      ),
+                      if (report.labValues != null &&
+                          report.labValues!.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _LabValuesSection(labValues: report.labValues!),
+                      ],
                       if (report.doctorName.isNotEmpty ||
                           report.institutionName != null) ...[
                         const SizedBox(height: 12),
@@ -211,22 +226,13 @@ class LabReportDetailScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                         FilledButton.icon(
                           onPressed: () =>
-                              _openFile(context, ref, report.filePath!),
+                              _openFile(context, ref, report.id),
                           icon: const Icon(Icons.open_in_new_rounded),
                           label: const Text('View Report'),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size.fromHeight(48),
                           ),
                         ),
-                        if (report.fileOriginalName != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            report.fileOriginalName!,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: cs.onSurfaceVariant),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
                       ],
                       const SizedBox(height: 32),
                     ],
@@ -236,6 +242,146 @@ class LabReportDetailScreen extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _LabValuesSection extends StatelessWidget {
+  const _LabValuesSection({required this.labValues});
+
+  final List<LabValue> labValues;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Lab Values',
+            style: tt.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: cs.primary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...labValues.map((lv) => _LabValueRow(labValue: lv)),
+        ],
+      ),
+    );
+  }
+}
+
+class _LabValueRow extends StatelessWidget {
+  const _LabValueRow({required this.labValue});
+
+  final LabValue labValue;
+
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'high':
+      case 'critical':
+        return Colors.red;
+      case 'low':
+        return Colors.orange;
+      default:
+        return Colors.green;
+    }
+  }
+
+  String _displayValue() {
+    final v = labValue.value;
+    final str = v == v.truncateToDouble()
+        ? v.toInt().toString()
+        : v.toStringAsFixed(2);
+    return labValue.unit != null ? '$str ${labValue.unit}' : str;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final color = _statusColor(labValue.status);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            margin: const EdgeInsets.only(top: 5, right: 10),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        labValue.parameterName,
+                        style: tt.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        labValue.status.toUpperCase(),
+                        style: tt.labelSmall?.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      _displayValue(),
+                      style: tt.bodySmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (labValue.referenceRange != null)
+                      Text(
+                        '  ·  Ref: ${labValue.referenceRange}',
+                        style: tt.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

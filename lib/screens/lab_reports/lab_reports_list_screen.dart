@@ -110,31 +110,49 @@ class _LabReportsListScreenState extends ConsumerState<LabReportsListScreen> {
             ),
         ],
       ),
-      body: reportsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorState(
-          message: e.toString(),
-          onRetry: () => ref.read(labReportsProvider.notifier).refresh(),
-        ),
-        data: (list) {
-          final filtered = _applySearch(list);
-          if (filtered.isEmpty) {
-            return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
-          }
-          return RefreshIndicator(
-            onRefresh: () => ref.read(labReportsProvider.notifier).refresh(),
-            color: cs.primary,
-            child: ListView.separated(
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(labReportsProvider.notifier).refresh(),
+        color: cs.primary,
+        child: reportsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverFillRemaining(
+                child: _ErrorState(
+                  message: e.toString(),
+                  onRetry: () =>
+                      ref.read(labReportsProvider.notifier).refresh(),
+                ),
+              ),
+            ],
+          ),
+          data: (list) {
+            final filtered = _applySearch(list);
+            if (filtered.isEmpty) {
+              return CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverFillRemaining(
+                    child: _EmptyState(
+                      hasSearch: _searchCtrl.text.isNotEmpty,
+                    ),
+                  ),
+                ],
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (_, i) => _LabReportCard(
                 report: filtered[i],
-                statusColor: _statusColor(context, filtered[i].status),
+                statusColor: _statusColor(context, filtered[i].testType),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/lab-reports/new'),
@@ -219,7 +237,7 @@ class _LabReportCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (report.status != null)
+              if (report.testType != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -230,7 +248,7 @@ class _LabReportCard extends StatelessWidget {
                     borderRadius: const BorderRadius.all(Radius.circular(20)),
                   ),
                   child: Text(
-                    report.status!,
+                    report.testType!,
                     style: tt.labelSmall?.copyWith(
                       color: statusColor,
                       fontWeight: FontWeight.w700,

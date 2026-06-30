@@ -4,6 +4,40 @@ import 'package:json_annotation/json_annotation.dart';
 part 'lab_report.g.dart';
 
 @JsonSerializable(fieldRename: FieldRename.snake)
+class LabValue extends Equatable {
+  const LabValue({
+    required this.id,
+    required this.parameterName,
+    required this.value,
+    required this.status,
+    this.unit,
+    this.referenceRange,
+  });
+
+  factory LabValue.fromJson(Map<String, dynamic> json) =>
+      _$LabValueFromJson(json);
+
+  final String id;
+  final String parameterName;
+  @JsonKey(fromJson: _toDouble)
+  final double value;
+  final String? unit;
+  final String? referenceRange;
+  final String status;
+
+  static double _toDouble(dynamic v) {
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.parse(v.toString());
+  }
+
+  Map<String, dynamic> toJson() => _$LabValueToJson(this);
+
+  @override
+  List<Object?> get props => [id];
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
 class LabReportPhysician extends Equatable {
   const LabReportPhysician({
     required this.id,
@@ -44,6 +78,7 @@ class LabReport extends Equatable {
     this.appointmentId,
     this.performedBy,
     this.institutionName,
+    this.labValues,
   });
 
   factory LabReport.fromJson(Map<String, dynamic> json) =>
@@ -62,6 +97,7 @@ class LabReport extends Equatable {
   final String? appointmentId;
   final LabReportPhysician? performedBy;
   final String? institutionName;
+  final List<LabValue>? labValues;
 
   String get patientName {
     final name = '${patientFirstName ?? ''} ${patientLastName ?? ''}'.trim();

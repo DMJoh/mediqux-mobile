@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/diagnostic_study/diagnostic_study.dart';
 import 'package:mediqux_mobile/providers/diagnostic_study_provider.dart';
+import 'package:mediqux_mobile/providers/dio_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 class DiagnosticStudyDetailScreen extends ConsumerWidget {
   const DiagnosticStudyDetailScreen({required this.studyId, super.key});
@@ -46,18 +48,26 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
   Future<void> _openAttachment(
     BuildContext context,
     WidgetRef ref,
-    String attachmentPath,
+    String studyId,
   ) async {
-    final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
-    final baseUrl = serverUrl.replaceFirst(RegExp(r'/api$'), '');
-    final fileUrl = '$baseUrl/$attachmentPath';
-    final uri = Uri.parse(fileUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Cannot open: $fileUrl')));
+    try {
+      final dio = ref.read(dioProvider);
+      final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+      final tmpDir = await getTemporaryDirectory();
+      final tmpPath = '${tmpDir.path}/mediqux_study_$studyId.pdf';
+      await dio.download('$serverUrl/diagnostic-studies/$studyId/view', tmpPath);
+      final result = await OpenFile.open(tmpPath);
+      if (result.type != ResultType.done && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Cannot open file: ${result.message}')),
+        );
+      }
+    } on Exception catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to download: $e')),
+        );
+      }
     }
   }
 
@@ -176,6 +186,18 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
+                      // Patient
+                      _InfoSection(
+                        title: 'Patient',
+                        rows: [
+                          _InfoRow(
+                            icon: Icons.person_rounded,
+                            label: 'Name',
+                            value: study.patientName,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
                       // Study details
                       _InfoSection(
                         title: 'Study Info',
@@ -204,18 +226,6 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
                           study.findings != null ||
                           study.conclusion != null)
                         _ClinicalSection(study: study),
-                      // Patient
-                      const SizedBox(height: 12),
-                      _InfoSection(
-                        title: 'Patient',
-                        rows: [
-                          _InfoRow(
-                            icon: Icons.person_rounded,
-                            label: 'Name',
-                            value: study.patientName,
-                          ),
-                        ],
-                      ),
                       // Physicians
                       if (study.orderingPhysician != null ||
                           study.performingPhysician != null) ...[
@@ -264,7 +274,7 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
                           onPressed: () => _openAttachment(
                             context,
                             ref,
-                            study.attachmentPath!,
+                            study.id,
                           ),
                           icon: const Icon(Icons.open_in_new_rounded),
                           label: const Text('View Attachment'),
