@@ -12,13 +12,13 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5.4.0
         with:
           distribution: temurin
           java-version: 21
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@v2.23.0
         with:
           channel: stable
           cache: true
@@ -46,11 +46,11 @@ jobs:
         run: flutter build appbundle --release
 
       - name: Upload APK to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload AAB to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: build/app/outputs/bundle/release/app-release.aab
