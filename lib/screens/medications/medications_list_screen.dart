@@ -101,30 +101,32 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
         color: cs.primary,
         child: medicationsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverFillRemaining(
-                hasScrollBody: false,
+          error: (e, _) => LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _ErrorState(
                   message: e.toString(),
                   onRetry: () =>
                       ref.read(medicationsProvider.notifier).refresh(),
                 ),
               ),
-            ],
+            ),
           ),
           data: (list) {
             final filtered = _applySearch(list);
             if (filtered.isEmpty) {
-              return CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverFillRemaining(
-                    hasScrollBody: false,
+              return LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
                     child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
                   ),
-                ],
+                ),
               );
             }
             return ListView.separated(

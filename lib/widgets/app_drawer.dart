@@ -22,70 +22,76 @@ class AppDrawer extends ConsumerWidget {
         child: Column(
           children: [
             _DrawerHeader(user: user),
-            _NavItem(
-              icon: Icons.dashboard_rounded,
-              label: 'Dashboard',
-              route: '/',
-              currentRoute: currentRoute,
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                children: [
+                  _NavItem(
+                    icon: Icons.dashboard_rounded,
+                    label: 'Dashboard',
+                    route: '/',
+                    currentRoute: currentRoute,
+                  ),
+                  _NavItem(
+                    icon: Icons.people_rounded,
+                    label: 'Patients',
+                    route: '/patients',
+                    currentRoute: currentRoute,
+                  ),
+                  _NavItem(
+                    icon: Icons.medical_services_rounded,
+                    label: 'Doctors',
+                    route: '/doctors',
+                    currentRoute: currentRoute,
+                  ),
+                  _NavItem(
+                    icon: Icons.business_rounded,
+                    label: 'Institutions',
+                    route: '/institutions',
+                    currentRoute: currentRoute,
+                  ),
+                  const Divider(height: 8),
+                  _NavItem(
+                    icon: Icons.calendar_month_rounded,
+                    label: 'Appointments',
+                    route: '/appointments',
+                    currentRoute: currentRoute,
+                  ),
+                  _NavItem(
+                    icon: Icons.health_and_safety_rounded,
+                    label: 'Conditions',
+                    route: '/conditions',
+                    currentRoute: currentRoute,
+                  ),
+                  _NavItem(
+                    icon: Icons.medication_rounded,
+                    label: 'Medications',
+                    route: '/medications',
+                    currentRoute: currentRoute,
+                  ),
+                  _NavItem(
+                    icon: Icons.receipt_long_rounded,
+                    label: 'Prescriptions',
+                    route: '/prescriptions',
+                    currentRoute: currentRoute,
+                  ),
+                  const Divider(height: 8),
+                  _NavItem(
+                    icon: Icons.science_rounded,
+                    label: 'Lab Reports',
+                    route: '/lab-reports',
+                    currentRoute: currentRoute,
+                  ),
+                  _NavItem(
+                    icon: Icons.image_search_rounded,
+                    label: 'Diagnostic Studies',
+                    route: '/diagnostic-studies',
+                    currentRoute: currentRoute,
+                  ),
+                ],
+              ),
             ),
-            _NavItem(
-              icon: Icons.people_rounded,
-              label: 'Patients',
-              route: '/patients',
-              currentRoute: currentRoute,
-            ),
-            _NavItem(
-              icon: Icons.medical_services_rounded,
-              label: 'Doctors',
-              route: '/doctors',
-              currentRoute: currentRoute,
-            ),
-            _NavItem(
-              icon: Icons.business_rounded,
-              label: 'Institutions',
-              route: '/institutions',
-              currentRoute: currentRoute,
-            ),
-            const Divider(height: 8),
-            _NavItem(
-              icon: Icons.calendar_month_rounded,
-              label: 'Appointments',
-              route: '/appointments',
-              currentRoute: currentRoute,
-            ),
-            _NavItem(
-              icon: Icons.health_and_safety_rounded,
-              label: 'Conditions',
-              route: '/conditions',
-              currentRoute: currentRoute,
-            ),
-            _NavItem(
-              icon: Icons.medication_rounded,
-              label: 'Medications',
-              route: '/medications',
-              currentRoute: currentRoute,
-            ),
-            _NavItem(
-              icon: Icons.receipt_long_rounded,
-              label: 'Prescriptions',
-              route: '/prescriptions',
-              currentRoute: currentRoute,
-            ),
-            const Divider(height: 8),
-            _NavItem(
-              icon: Icons.science_rounded,
-              label: 'Lab Reports',
-              route: '/lab-reports',
-              currentRoute: currentRoute,
-            ),
-            _NavItem(
-              icon: Icons.image_search_rounded,
-              label: 'Diagnostic Studies',
-              route: '/diagnostic-studies',
-              currentRoute: currentRoute,
-            ),
-            const Divider(height: 8),
-            const Spacer(),
+            const Divider(height: 1),
             ListTile(
               leading: Icon(Icons.dns_rounded, color: cs.onSurfaceVariant),
               title: Text(
