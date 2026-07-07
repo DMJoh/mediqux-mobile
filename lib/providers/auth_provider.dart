@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:mediqux_mobile/models/auth/login_request.dart';
 import 'package:mediqux_mobile/models/user.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
+import 'package:mediqux_mobile/providers/session_provider.dart';
 import 'package:mediqux_mobile/providers/storage_provider.dart';
 import 'package:mediqux_mobile/services/auth_api.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -12,6 +13,7 @@ part 'auth_provider.g.dart';
 class Auth extends _$Auth {
   @override
   Future<User?> build() async {
+    ref.watch(sessionVersionProvider);
     final storage = ref.watch(storageServiceProvider);
     final token = await storage.readToken();
     if (token == null) return null;
