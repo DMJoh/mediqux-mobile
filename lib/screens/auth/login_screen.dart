@@ -223,10 +223,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 labelText: 'Username or Email',
                                 prefixIcon: Icon(Icons.person_outline_rounded),
                               ),
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty)
-                                      ? 'Username is required'
-                                      : null,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Username is required'
+                                  : null,
                             ),
 
                             const SizedBox(height: 14),
@@ -253,10 +252,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                 ),
                               ),
-                              validator: (v) =>
-                                  (v == null || v.isEmpty)
-                                      ? 'Password is required'
-                                      : null,
+                              validator: (v) => (v == null || v.isEmpty)
+                                  ? 'Password is required'
+                                  : null,
                             ),
 
                             if (authState.hasError) ...[
