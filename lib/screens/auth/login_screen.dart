@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
@@ -83,7 +84,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .read(authProvider.notifier)
         .login(_usernameController.text.trim(), _passwordController.text);
 
-    if (mounted) setState(() => _isLoading = false);
+    if (!mounted) return;
+
+    // Tell autofill services (Bitwarden, system keychain) the context is done
+    // so they can offer to save the credentials.
+    if (ref.read(authProvider).valueOrNull != null) {
+      TextInput.finishAutofillContext();
+    }
+
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -176,7 +185,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Server URL
+                            // Server URL — outside autofill group
                             TextFormField(
                               controller: _serverController,
                               keyboardType: TextInputType.url,
@@ -213,48 +222,62 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                             const SizedBox(height: 14),
 
-                            // Username
-                            TextFormField(
-                              controller: _usernameController,
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Username or Email',
-                                prefixIcon: Icon(Icons.person_outline_rounded),
-                              ),
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Username is required'
-                                  : null,
-                            ),
-
-                            const SizedBox(height: 14),
-
-                            // Password
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _submit(),
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(
-                                  Icons.lock_outline_rounded,
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_rounded
-                                        : Icons.visibility_off_rounded,
+                            // Username + password grouped for autofill services
+                            AutofillGroup(
+                              child: Column(
+                                children: [
+                                  TextFormField(
+                                    controller: _usernameController,
+                                    autocorrect: false,
+                                    enableSuggestions: false,
+                                    textInputAction: TextInputAction.next,
+                                    autofillHints: const [
+                                      AutofillHints.username,
+                                      AutofillHints.email,
+                                    ],
+                                    decoration: const InputDecoration(
+                                      labelText: 'Username or Email',
+                                      prefixIcon: Icon(
+                                        Icons.person_outline_rounded,
+                                      ),
+                                    ),
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                        ? 'Username is required'
+                                        : null,
                                   ),
-                                  onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword,
+                                  const SizedBox(height: 14),
+                                  TextFormField(
+                                    controller: _passwordController,
+                                    obscureText: _obscurePassword,
+                                    textInputAction: TextInputAction.done,
+                                    autofillHints: const [
+                                      AutofillHints.password,
+                                    ],
+                                    onFieldSubmitted: (_) => _submit(),
+                                    decoration: InputDecoration(
+                                      labelText: 'Password',
+                                      prefixIcon: const Icon(
+                                        Icons.lock_outline_rounded,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _obscurePassword
+                                              ? Icons.visibility_rounded
+                                              : Icons.visibility_off_rounded,
+                                        ),
+                                        onPressed: () => setState(
+                                          () => _obscurePassword =
+                                              !_obscurePassword,
+                                        ),
+                                      ),
+                                    ),
+                                    validator: (v) => (v == null || v.isEmpty)
+                                        ? 'Password is required'
+                                        : null,
                                   ),
-                                ),
+                                ],
                               ),
-                              validator: (v) => (v == null || v.isEmpty)
-                                  ? 'Password is required'
-                                  : null,
                             ),
 
                             if (authState.hasError) ...[
