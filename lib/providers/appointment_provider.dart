@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/models/appointment/appointment.dart';
@@ -36,8 +38,10 @@ class Appointments extends _$Appointments {
       final response = await api.createAppointment(request);
       final appointment = response.data!;
       final current = state.valueOrNull ?? [];
-      final updated = [appointment, ...current];
-      state = AsyncValue.data(updated);
+      state = AsyncValue.data([appointment, ...current]);
+      // Server response from create may lack denormalized fields (patient name
+      // etc.) — silently re-fetch to get the fully populated record.
+      unawaited(_silentRefresh());
       return appointment;
     } on DioException catch (e) {
       throw Exception(_extractError(e));
@@ -56,9 +60,23 @@ class Appointments extends _$Appointments {
       state = AsyncValue.data(
         current.map((a) => a.id == id ? updated : a).toList(),
       );
+      unawaited(_silentRefresh());
       return updated;
     } on DioException catch (e) {
       throw Exception(_extractError(e));
+    }
+  }
+
+  // Re-fetches without setting loading state — list updates in-place, no flash.
+  Future<void> _silentRefresh() async {
+    try {
+      final api = AppointmentApi(ref.read(dioProvider));
+      final response = await api.getAppointments();
+      final data = response.data ?? []
+        ..sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
+      state = AsyncValue.data(data);
+    } on Object {
+      // Ignore errors from background refresh; the optimistic data stays.
     }
   }
 

@@ -37,17 +37,27 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final patients = ref.read(patientsProvider).valueOrNull ?? [];
-      final apts = ref.read(appointmentsProvider).valueOrNull ?? [];
-      if (mounted) {
-        setState(() {
-          _patients = patients;
-          _appointments = apts;
-          _loadingDropdowns = false;
-        });
-      }
-    });
+    final pA = ref.read(patientsProvider);
+    final aA = ref.read(appointmentsProvider);
+    if (pA.hasValue && aA.hasValue) {
+      _patients = pA.requireValue;
+      _appointments = aA.requireValue;
+      _loadingDropdowns = false;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final results = await Future.wait([
+          ref.read(patientsProvider.future),
+          ref.read(appointmentsProvider.future),
+        ]);
+        if (mounted) {
+          setState(() {
+            _patients = results[0] as List<Patient>;
+            _appointments = results[1] as List<Appointment>;
+            _loadingDropdowns = false;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -185,7 +195,10 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_loadingDropdowns)
-                const Center(child: CircularProgressIndicator())
+                const Padding(
+                  padding: EdgeInsets.only(top: 48),
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else ...[
                 // Patient dropdown
                 // ignore: deprecated_member_use
@@ -205,38 +218,36 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                   onChanged: (v) => setState(() => _selectedPatientId = v),
                   validator: (v) => v == null ? 'Patient is required' : null,
                 ),
-              ],
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _testNameCtrl,
-                decoration: const InputDecoration(labelText: 'Test Name *'),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Test name is required'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              // Date picker
-              GestureDetector(
-                onTap: _pickDate,
-                child: AbsorbPointer(
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Test Date *',
-                      hintText: 'Select date',
-                      suffixIcon: Icon(Icons.calendar_today_rounded),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _testNameCtrl,
+                  decoration: const InputDecoration(labelText: 'Test Name *'),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Test name is required'
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                // Date picker
+                GestureDetector(
+                  onTap: _pickDate,
+                  child: AbsorbPointer(
+                    child: TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: 'Test Date *',
+                        hintText: 'Select date',
+                        suffixIcon: Icon(Icons.calendar_today_rounded),
+                      ),
+                      controller: TextEditingController(
+                        text: _selectedDate != null
+                            ? dateFmt.format(_selectedDate!)
+                            : '',
+                      ),
+                      validator: (_) =>
+                          _selectedDate == null ? 'Date is required' : null,
                     ),
-                    controller: TextEditingController(
-                      text: _selectedDate != null
-                          ? dateFmt.format(_selectedDate!)
-                          : '',
-                    ),
-                    validator: (_) =>
-                        _selectedDate == null ? 'Date is required' : null,
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              if (!_loadingDropdowns) ...[
+                const SizedBox(height: 12),
                 // Appointment dropdown (optional)
                 // ignore: deprecated_member_use
                 DropdownButtonFormField<String>(
@@ -262,50 +273,50 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                   onChanged: (v) => setState(() => _selectedAppointmentId = v),
                 ),
                 const SizedBox(height: 12),
-              ],
-              TextFormField(
-                controller: _notesCtrl,
-                decoration: const InputDecoration(labelText: 'Notes'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 20),
-              // PDF upload
-              OutlinedButton.icon(
-                onPressed: _pickFile,
-                icon: const Icon(Icons.upload_file_rounded),
-                label: const Text('Upload PDF (optional)'),
-              ),
-              if (_fileName != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.picture_as_pdf_rounded,
-                      size: 18,
-                      color: cs.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _fileName!,
-                        style: tt.bodySmall?.copyWith(color: cs.primary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 16),
-                      onPressed: () => setState(() {
-                        _filePath = null;
-                        _fileName = null;
-                      }),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
+                TextFormField(
+                  controller: _notesCtrl,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                  maxLines: 3,
                 ),
+                const SizedBox(height: 20),
+                // PDF upload
+                OutlinedButton.icon(
+                  onPressed: _pickFile,
+                  icon: const Icon(Icons.upload_file_rounded),
+                  label: const Text('Upload PDF (optional)'),
+                ),
+                if (_fileName != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.picture_as_pdf_rounded,
+                        size: 18,
+                        color: cs.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _fileName!,
+                          style: tt.bodySmall?.copyWith(color: cs.primary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        onPressed: () => setState(() {
+                          _filePath = null;
+                          _fileName = null;
+                        }),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 32),
               ],
-              const SizedBox(height: 32),
             ],
           ),
         ),

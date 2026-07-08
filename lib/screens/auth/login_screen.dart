@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
+import 'package:mediqux_mobile/providers/server_provider.dart';
 import 'package:mediqux_mobile/widgets/mediqux_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -13,37 +15,98 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _serverController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+  String? _serverError;
+  bool _initialized = false;
 
   @override
   void dispose() {
+    _serverController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  String _normaliseUrl(String raw) {
+    var url = raw.trim();
+    if (url.endsWith('/')) url = url.substring(0, url.length - 1);
+    if (!url.endsWith('/api')) url = '$url/api';
+    return url;
+  }
+
+  Future<bool> _testConnection(String url) async {
+    try {
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 8),
+          receiveTimeout: const Duration(seconds: 8),
+        ),
+      );
+      final response = await dio.get<dynamic>('$url/health');
+      return response.statusCode == 200;
+    } on Object {
+      return false;
+    }
+  }
+
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() {
+      _isLoading = true;
+      _serverError = null;
+    });
+
+    final url = _normaliseUrl(_serverController.text);
+    final reachable = await _testConnection(url);
+
+    if (!mounted) return;
+
+    if (!reachable) {
+      setState(() {
+        _isLoading = false;
+        _serverError =
+            'Could not reach the server. '
+            'Check the address and try again.';
+      });
+      return;
+    }
+
+    await ref.read(serverConfigProvider.notifier).setUrl(url);
+    if (!mounted) return;
+
     await ref
         .read(authProvider.notifier)
         .login(_usernameController.text.trim(), _passwordController.text);
+
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_initialized) {
+      final existing = ref.read(serverConfigProvider).valueOrNull;
+      if (existing != null) {
+        _serverController.text = existing.replaceFirst(RegExp(r'/api$'), '');
+      }
+      _initialized = true;
+    }
+
     final authState = ref.watch(authProvider);
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final isLoading = authState.isLoading;
+    final isLoading = _isLoading || authState.isLoading;
 
     return Scaffold(
       body: Stack(
         children: [
           const FractionallySizedBox(
             alignment: Alignment.topCenter,
-            heightFactor: 0.45,
+            heightFactor: 0.38,
             widthFactor: 1,
             child: DecoratedBox(
               decoration: BoxDecoration(gradient: AppTheme.headerGradient),
@@ -54,21 +117,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 // ── Brand area ──────────────────────────
                 Expanded(
-                  flex: 4,
+                  flex: 3,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const MediquxLogo(size: 72),
-                      const SizedBox(height: 16),
+                      const MediquxLogo(),
+                      const SizedBox(height: 12),
                       Text(
                         'Mediqux',
-                        style: tt.headlineMedium?.copyWith(
+                        style: tt.headlineSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.4,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         'Patient Management System',
                         style: tt.bodySmall?.copyWith(
@@ -82,7 +145,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // ── Form card ───────────────────────────
                 Expanded(
-                  flex: 6,
+                  flex: 7,
                   child: Container(
                     decoration: BoxDecoration(
                       color: cs.surface,
@@ -91,14 +154,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
                       child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Welcome back',
+                              'Sign In',
                               style: tt.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: cs.onSurface,
@@ -106,29 +169,74 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Sign in to continue',
+                              'Enter your server and credentials',
                               style: tt.bodyMedium?.copyWith(
                                 color: cs.onSurfaceVariant,
                               ),
                             ),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 24),
+
+                            // Server URL
+                            TextFormField(
+                              controller: _serverController,
+                              keyboardType: TextInputType.url,
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              textInputAction: TextInputAction.next,
+                              decoration: const InputDecoration(
+                                labelText: 'Server Address',
+                                hintText: 'http://192.168.1.5:3000',
+                                prefixIcon: Icon(Icons.dns_rounded),
+                              ),
+                              onChanged: (_) {
+                                if (_serverError != null) {
+                                  setState(() => _serverError = null);
+                                }
+                              },
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) {
+                                  return 'Server address is required';
+                                }
+                                final lower = v.trim().toLowerCase();
+                                if (!lower.startsWith('http://') &&
+                                    !lower.startsWith('https://')) {
+                                  return 'Must start with http:// or https://';
+                                }
+                                return null;
+                              },
+                            ),
+
+                            if (_serverError != null) ...[
+                              const SizedBox(height: 10),
+                              _ErrorBanner(message: _serverError!),
+                            ],
+
+                            const SizedBox(height: 14),
+
+                            // Username
                             TextFormField(
                               controller: _usernameController,
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              textInputAction: TextInputAction.next,
                               decoration: const InputDecoration(
                                 labelText: 'Username or Email',
                                 prefixIcon: Icon(Icons.person_outline_rounded),
                               ),
-                              textInputAction: TextInputAction.next,
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Username is required'
-                                  : null,
+                              validator: (v) =>
+                                  (v == null || v.trim().isEmpty)
+                                      ? 'Username is required'
+                                      : null,
                             ),
-                            const SizedBox(height: 16),
+
+                            const SizedBox(height: 14),
+
+                            // Password
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _submit(),
                               decoration: InputDecoration(
                                 labelText: 'Password',
                                 prefixIcon: const Icon(
@@ -145,24 +253,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                 ),
                               ),
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _submit(),
-                              validator: (v) {
-                                if (v == null || v.isEmpty) {
-                                  return 'Password is required';
-                                }
-                                return null;
-                              },
+                              validator: (v) =>
+                                  (v == null || v.isEmpty)
+                                      ? 'Password is required'
+                                      : null,
                             ),
+
                             if (authState.hasError) ...[
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 14),
                               _ErrorBanner(
                                 message: authState.error is String
                                     ? authState.error! as String
                                     : 'An unexpected error occurred',
                               ),
                             ],
+
                             const SizedBox(height: 24),
+
                             SizedBox(
                               height: 54,
                               child: FilledButton(
@@ -178,6 +285,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       )
                                     : const Text('Sign In'),
                               ),
+                            ),
+
+                            const SizedBox(height: 20),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 15,
+                                  color: cs.onSurfaceVariant.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Contact your Mediqux administrator '
+                                    'for the server address and credentials.',
+                                    style: tt.bodySmall?.copyWith(
+                                      color: cs.onSurfaceVariant.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

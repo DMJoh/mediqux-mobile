@@ -98,9 +98,16 @@ class AppDrawer extends ConsumerWidget {
                 'Change Server',
                 style: tt.bodyMedium?.copyWith(color: cs.onSurface),
               ),
-              onTap: () {
+              subtitle: Text(
+                'Sign out and update server address',
+                style: tt.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                ),
+              ),
+              onTap: () async {
                 Navigator.of(context).pop();
-                context.push('/setup');
+                await ref.read(authProvider.notifier).logout();
+                // Router redirects to /login; server URL stays pre-filled
               },
             ),
             ListTile(
@@ -113,10 +120,8 @@ class AppDrawer extends ConsumerWidget {
                 ),
               ),
               onTap: () async {
+                Navigator.of(context).pop();
                 await ref.read(authProvider.notifier).logout();
-                if (context.mounted) {
-                  context.go('/login');
-                }
               },
             ),
             const SizedBox(height: 8),

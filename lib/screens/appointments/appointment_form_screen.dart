@@ -62,19 +62,31 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final patients = ref.read(patientsProvider).valueOrNull ?? [];
-      final doctors = ref.read(doctorsProvider).valueOrNull ?? [];
-      final institutions = ref.read(institutionsProvider).valueOrNull ?? [];
-      if (mounted) {
-        setState(() {
-          _patients = patients;
-          _doctors = doctors;
-          _institutions = institutions;
-          _loadingDropdowns = false;
-        });
-      }
-    });
+    final pA = ref.read(patientsProvider);
+    final dA = ref.read(doctorsProvider);
+    final iA = ref.read(institutionsProvider);
+    if (pA.hasValue && dA.hasValue && iA.hasValue) {
+      _patients = pA.requireValue;
+      _doctors = dA.requireValue;
+      _institutions = iA.requireValue;
+      _loadingDropdowns = false;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final results = await Future.wait([
+          ref.read(patientsProvider.future),
+          ref.read(doctorsProvider.future),
+          ref.read(institutionsProvider.future),
+        ]);
+        if (mounted) {
+          setState(() {
+            _patients = results[0] as List<Patient>;
+            _doctors = results[1] as List<Doctor>;
+            _institutions = results[2] as List<Institution>;
+            _loadingDropdowns = false;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -239,7 +251,10 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_loadingDropdowns)
-                const Center(child: CircularProgressIndicator())
+                const Padding(
+                  padding: EdgeInsets.only(top: 48),
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else ...[
                 // Patient dropdown
                 // ignore: deprecated_member_use
@@ -353,20 +368,20 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
                   ],
                   onChanged: (v) => setState(() => _selectedInstitutionId = v),
                 ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notesCtrl,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _diagnosisCtrl,
+                  decoration: const InputDecoration(labelText: 'Diagnosis'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 32),
               ],
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notesCtrl,
-                decoration: const InputDecoration(labelText: 'Notes'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _diagnosisCtrl,
-                decoration: const InputDecoration(labelText: 'Diagnosis'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 32),
             ],
           ),
         ),

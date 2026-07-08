@@ -68,19 +68,31 @@ class _DiagnosticStudyFormScreenState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final patients = ref.read(patientsProvider).valueOrNull ?? [];
-      final doctors = ref.read(doctorsProvider).valueOrNull ?? [];
-      final institutions = ref.read(institutionsProvider).valueOrNull ?? [];
-      if (mounted) {
-        setState(() {
-          _patients = patients;
-          _doctors = doctors;
-          _institutions = institutions;
-          _loadingDropdowns = false;
-        });
-      }
-    });
+    final pA = ref.read(patientsProvider);
+    final dA = ref.read(doctorsProvider);
+    final iA = ref.read(institutionsProvider);
+    if (pA.hasValue && dA.hasValue && iA.hasValue) {
+      _patients = pA.requireValue;
+      _doctors = dA.requireValue;
+      _institutions = iA.requireValue;
+      _loadingDropdowns = false;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final results = await Future.wait([
+          ref.read(patientsProvider.future),
+          ref.read(doctorsProvider.future),
+          ref.read(institutionsProvider.future),
+        ]);
+        if (mounted) {
+          setState(() {
+            _patients = results[0] as List<Patient>;
+            _doctors = results[1] as List<Doctor>;
+            _institutions = results[2] as List<Institution>;
+            _loadingDropdowns = false;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -282,7 +294,10 @@ class _DiagnosticStudyFormScreenState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_loadingDropdowns)
-                const Center(child: CircularProgressIndicator())
+                const Padding(
+                  padding: EdgeInsets.only(top: 48),
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else ...[
                 // Patient dropdown
                 // ignore: deprecated_member_use
@@ -316,36 +331,34 @@ class _DiagnosticStudyFormScreenState
                   onChanged: (v) => setState(() => _selectedStudyType = v),
                   validator: (v) => v == null ? 'Study type is required' : null,
                 ),
-              ],
-              const SizedBox(height: 12),
-              // Date picker
-              GestureDetector(
-                onTap: _pickDate,
-                child: AbsorbPointer(
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Study Date *',
-                      hintText: 'Select date',
-                      suffixIcon: Icon(Icons.calendar_today_rounded),
+                const SizedBox(height: 12),
+                // Date picker
+                GestureDetector(
+                  onTap: _pickDate,
+                  child: AbsorbPointer(
+                    child: TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: 'Study Date *',
+                        hintText: 'Select date',
+                        suffixIcon: Icon(Icons.calendar_today_rounded),
+                      ),
+                      controller: TextEditingController(
+                        text: _selectedDate != null
+                            ? dateFmt.format(_selectedDate!)
+                            : '',
+                      ),
+                      validator: (_) =>
+                          _selectedDate == null ? 'Date is required' : null,
                     ),
-                    controller: TextEditingController(
-                      text: _selectedDate != null
-                          ? dateFmt.format(_selectedDate!)
-                          : '',
-                    ),
-                    validator: (_) =>
-                        _selectedDate == null ? 'Date is required' : null,
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _bodyRegionCtrl,
-                decoration: const InputDecoration(labelText: 'Body Region'),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              if (!_loadingDropdowns) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _bodyRegionCtrl,
+                  decoration: const InputDecoration(labelText: 'Body Region'),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 12),
                 // Ordering physician dropdown
                 // ignore: deprecated_member_use
                 DropdownButtonFormField<String>(
@@ -418,70 +431,70 @@ class _DiagnosticStudyFormScreenState
                   onChanged: (v) => setState(() => _selectedInstitutionId = v),
                 ),
                 const SizedBox(height: 12),
-              ],
-              TextFormField(
-                controller: _indicationCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Clinical Indication',
+                TextFormField(
+                  controller: _indicationCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Clinical Indication',
+                  ),
+                  maxLines: 2,
                 ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _findingsCtrl,
-                decoration: const InputDecoration(labelText: 'Findings'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _conclusionCtrl,
-                decoration: const InputDecoration(labelText: 'Conclusion'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notesCtrl,
-                decoration: const InputDecoration(labelText: 'Notes'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 20),
-              // File upload
-              OutlinedButton.icon(
-                onPressed: _pickFile,
-                icon: const Icon(Icons.upload_file_rounded),
-                label: const Text('Attach File (optional)'),
-              ),
-              if (_fileName != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.attach_file_rounded,
-                      size: 18,
-                      color: cs.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _fileName!,
-                        style: tt.bodySmall?.copyWith(color: cs.primary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _findingsCtrl,
+                  decoration: const InputDecoration(labelText: 'Findings'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _conclusionCtrl,
+                  decoration: const InputDecoration(labelText: 'Conclusion'),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notesCtrl,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 20),
+                // File upload
+                OutlinedButton.icon(
+                  onPressed: _pickFile,
+                  icon: const Icon(Icons.upload_file_rounded),
+                  label: const Text('Attach File (optional)'),
+                ),
+                if (_fileName != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.attach_file_rounded,
+                        size: 18,
+                        color: cs.primary,
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 16),
-                      onPressed: () => setState(() {
-                        _filePath = null;
-                        _fileName = null;
-                      }),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _fileName!,
+                          style: tt.bodySmall?.copyWith(color: cs.primary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        onPressed: () => setState(() {
+                          _filePath = null;
+                          _fileName = null;
+                        }),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 32),
               ],
-              const SizedBox(height: 32),
             ],
           ),
         ),

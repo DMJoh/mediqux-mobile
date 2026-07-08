@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/user.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
-import 'package:mediqux_mobile/providers/server_provider.dart';
 import 'package:mediqux_mobile/screens/appointments/appointment_detail_screen.dart';
 import 'package:mediqux_mobile/screens/appointments/appointment_form_screen.dart';
 import 'package:mediqux_mobile/screens/appointments/appointments_list_screen.dart';
@@ -33,7 +32,6 @@ import 'package:mediqux_mobile/screens/patients/patients_list_screen.dart';
 import 'package:mediqux_mobile/screens/prescriptions/prescription_detail_screen.dart';
 import 'package:mediqux_mobile/screens/prescriptions/prescription_form_screen.dart';
 import 'package:mediqux_mobile/screens/prescriptions/prescriptions_list_screen.dart';
-import 'package:mediqux_mobile/screens/setup/server_setup_screen.dart';
 
 GoRoute _crudRoute({
   required String path,
@@ -68,7 +66,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [
-      GoRoute(path: '/setup', builder: (_, __) => const ServerSetupScreen()),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/', builder: (_, __) => const DashboardScreen()),
       _crudRoute(
@@ -146,39 +143,24 @@ final routerProvider = Provider<GoRouter>((ref) {
 
 class _RouterNotifier extends ChangeNotifier {
   _RouterNotifier(Ref ref) {
-    _serverState = ref.read(serverConfigProvider);
     _authState = ref.read(authProvider);
 
-    ref
-      ..listen<AsyncValue<String?>>(serverConfigProvider, (_, next) {
-        _serverState = next;
-        notifyListeners();
-      })
-      ..listen<AsyncValue<User?>>(authProvider, (_, next) {
-        _authState = next;
-        notifyListeners();
-      });
+    ref.listen<AsyncValue<User?>>(authProvider, (_, next) {
+      _authState = next;
+      notifyListeners();
+    });
   }
 
-  late AsyncValue<String?> _serverState;
   late AsyncValue<User?> _authState;
 
   String? redirect(BuildContext context, GoRouterState state) {
-    if (_serverState.isLoading || _authState.isLoading) {
-      return null;
-    }
+    if (_authState.isLoading) return null;
 
     final loc = state.matchedLocation;
-    final hasServer = _serverState.valueOrNull != null;
     final isLoggedIn = _authState.valueOrNull != null;
 
-    if (!hasServer && loc != '/setup') return '/setup';
-    if (hasServer && !isLoggedIn && loc != '/login') {
-      return '/login';
-    }
-    if (hasServer && isLoggedIn && loc == '/login') {
-      return '/';
-    }
+    if (!isLoggedIn && loc != '/login') return '/login';
+    if (isLoggedIn && loc == '/login') return '/';
     return null;
   }
 }
