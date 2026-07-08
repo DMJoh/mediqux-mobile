@@ -18,7 +18,6 @@ class Institutions extends _$Institutions {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final api = InstitutionApi(ref.read(dioProvider));
       final response = await api.getInstitutions();

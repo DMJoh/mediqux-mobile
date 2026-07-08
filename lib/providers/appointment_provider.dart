@@ -22,7 +22,6 @@ class Appointments extends _$Appointments {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final api = AppointmentApi(ref.read(dioProvider));
       final response = await api.getAppointments();

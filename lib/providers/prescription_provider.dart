@@ -18,7 +18,6 @@ class Prescriptions extends _$Prescriptions {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final api = PrescriptionApi(ref.read(dioProvider));
       final response = await api.getPrescriptions();

@@ -18,7 +18,6 @@ class Conditions extends _$Conditions {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final api = ConditionApi(ref.read(dioProvider));
       final response = await api.getConditions();

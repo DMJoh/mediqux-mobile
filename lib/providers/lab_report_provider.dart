@@ -18,7 +18,6 @@ class LabReports extends _$LabReports {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final api = LabReportApi(ref.read(dioProvider));
       final response = await api.getLabReports();

@@ -18,7 +18,6 @@ class DiagnosticStudies extends _$DiagnosticStudies {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final api = DiagnosticStudyApi(ref.read(dioProvider));
       final response = await api.getStudies();
