@@ -1,7 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:mediqux_mobile/models/auth/login_request.dart';
 import 'package:mediqux_mobile/models/user.dart';
+import 'package:mediqux_mobile/providers/appointment_provider.dart';
+import 'package:mediqux_mobile/providers/condition_provider.dart';
+import 'package:mediqux_mobile/providers/diagnostic_study_provider.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
+import 'package:mediqux_mobile/providers/doctor_provider.dart';
+import 'package:mediqux_mobile/providers/institution_provider.dart';
+import 'package:mediqux_mobile/providers/lab_report_provider.dart';
+import 'package:mediqux_mobile/providers/medication_provider.dart';
+import 'package:mediqux_mobile/providers/patient_provider.dart';
+import 'package:mediqux_mobile/providers/prescription_provider.dart';
 import 'package:mediqux_mobile/providers/session_provider.dart';
 import 'package:mediqux_mobile/providers/storage_provider.dart';
 import 'package:mediqux_mobile/services/auth_api.dart';
@@ -47,7 +56,21 @@ class Auth extends _$Auth {
 
   Future<void> logout() async {
     await ref.read(storageServiceProvider).clearAuth();
+    _invalidateDataCache();
     state = const AsyncValue.data(null);
+  }
+
+  void _invalidateDataCache() {
+    ref
+      ..invalidate(appointmentsProvider)
+      ..invalidate(conditionsProvider)
+      ..invalidate(diagnosticStudiesProvider)
+      ..invalidate(doctorsProvider)
+      ..invalidate(institutionsProvider)
+      ..invalidate(labReportsProvider)
+      ..invalidate(medicationsProvider)
+      ..invalidate(patientsProvider)
+      ..invalidate(prescriptionsProvider);
   }
 
   String _extractError(DioException e) {
