@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
@@ -14,18 +14,54 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final _serverController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocus = FocusNode();
   bool _obscurePassword = true;
   bool _isLoading = false;
   String? _serverError;
   bool _initialized = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  // Bitwarden's autofill service triggers HIDE_SAME_WINDOW_FOCUSED_WITHOUT_EDITOR
+  // at the Android IME layer, dropping the keyboard without calling Flutter's
+  // unfocus(). Flutter's logical hasFocus therefore stays true while the keyboard
+  // is hidden. We detect this mismatch here and re-request focus to restore the
+  // keyboard. When the user presses back, Flutter calls unfocus() first, so
+  // hasFocus is already false by the time this fires — no conflict.
+  @override
+  void didChangeMetrics() {
+    if (!_passwordFocus.hasFocus || _isLoading) return;
+    final bottom =
+        WidgetsBinding
+            .instance
+            .platformDispatcher
+            .implicitView
+            ?.viewInsets
+            .bottom ??
+        0.0;
+    if (bottom == 0) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted && _passwordFocus.hasFocus && !_isLoading) {
+          _passwordFocus.requestFocus();
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _passwordFocus.dispose();
     _serverController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
@@ -86,8 +122,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (!mounted) return;
 
-    // Tell autofill services (Bitwarden, system keychain) the context is done
-    // so they can offer to save the credentials.
     if (ref.read(authProvider).valueOrNull != null) {
       TextInput.finishAutofillContext();
     }
@@ -222,7 +256,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                             const SizedBox(height: 14),
 
-                            // Username + password grouped for autofill services
                             AutofillGroup(
                               child: Column(
                                 children: [
@@ -249,6 +282,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   const SizedBox(height: 14),
                                   TextFormField(
                                     controller: _passwordController,
+                                    focusNode: _passwordFocus,
                                     obscureText: _obscurePassword,
                                     textInputAction: TextInputAction.done,
                                     autofillHints: const [
