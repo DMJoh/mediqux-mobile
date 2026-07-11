@@ -112,7 +112,11 @@ class AppointmentDetailScreen extends ConsumerWidget {
           final dateFmt = DateFormat('EEEE, MMMM d, yyyy');
           final timeFmt = DateFormat('h:mm a');
           final statusColor = _statusColor(context, apt.status);
-          return CustomScrollView(
+          return RefreshIndicator(
+            onRefresh: () => ref.refresh(
+              appointmentDetailProvider(appointmentId).future,
+            ),
+            child: CustomScrollView(
             slivers: [
               SliverAppBar(
                 expandedHeight: 180,
@@ -299,6 +303,7 @@ class AppointmentDetailScreen extends ConsumerWidget {
                 ),
               ),
             ],
+            ),
           );
         },
       ),

@@ -24,6 +24,8 @@ final dioProvider = Provider<Dio>((ref) {
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        // OkHttp (NativeAdapter) caches GET responses by default; disable it.
+        options.headers['Cache-Control'] = 'no-cache';
         return handler.next(options);
       },
       onError: (error, handler) async {
