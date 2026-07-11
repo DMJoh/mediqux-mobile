@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/medication/medication.dart';
 import 'package:mediqux_mobile/providers/medication_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 class MedicationDetailScreen extends ConsumerWidget {
   const MedicationDetailScreen({required this.medicationId, super.key});
@@ -46,7 +47,7 @@ class MedicationDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     }
   }
@@ -67,7 +68,7 @@ class MedicationDetailScreen extends ConsumerWidget {
             children: [
               Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
               const SizedBox(height: 16),
-              Text(e.toString()),
+              Text(friendlyError(e)),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => context.pop(),

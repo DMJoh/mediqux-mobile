@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/prescription/prescription.dart';
 import 'package:mediqux_mobile/providers/prescription_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 class PrescriptionDetailScreen extends ConsumerWidget {
   const PrescriptionDetailScreen({required this.prescriptionId, super.key});
@@ -73,7 +74,7 @@ class PrescriptionDetailScreen extends ConsumerWidget {
             children: [
               Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
               const SizedBox(height: 16),
-              Text(e.toString()),
+              Text(friendlyError(e)),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => context.pop(),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/condition/condition.dart';
 import 'package:mediqux_mobile/providers/condition_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 import 'package:mediqux_mobile/widgets/app_drawer.dart';
 
 Color _severityColor(String? severity) {
@@ -121,7 +122,7 @@ class _ConditionsListScreenState extends ConsumerState<ConditionsListScreen> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _ErrorState(
-                  message: e.toString(),
+                  message: friendlyError(e),
                   onRetry: () =>
                       ref.read(conditionsProvider.notifier).refresh(),
                 ),

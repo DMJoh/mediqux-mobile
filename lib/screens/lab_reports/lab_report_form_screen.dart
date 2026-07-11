@@ -8,6 +8,7 @@ import 'package:mediqux_mobile/models/patient/patient.dart';
 import 'package:mediqux_mobile/providers/appointment_provider.dart';
 import 'package:mediqux_mobile/providers/lab_report_provider.dart';
 import 'package:mediqux_mobile/providers/patient_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 class LabReportFormScreen extends ConsumerStatefulWidget {
   const LabReportFormScreen({super.key});
@@ -39,7 +40,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
     super.initState();
     final pA = ref.read(patientsProvider);
     final aA = ref.read(appointmentsProvider);
-    if (pA.hasValue && aA.hasValue) {
+    if (pA.hasValue && !pA.isLoading && aA.hasValue && !aA.isLoading) {
       _patients = pA.requireValue;
       _appointments = aA.requireValue;
       _loadingDropdowns = false;
@@ -136,7 +137,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

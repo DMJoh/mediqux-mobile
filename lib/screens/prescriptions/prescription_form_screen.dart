@@ -9,6 +9,7 @@ import 'package:mediqux_mobile/models/prescription/prescription_request.dart';
 import 'package:mediqux_mobile/providers/appointment_provider.dart';
 import 'package:mediqux_mobile/providers/medication_provider.dart';
 import 'package:mediqux_mobile/providers/prescription_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 const _kFrequencies = [
   'Once daily',
@@ -61,7 +62,7 @@ class _PrescriptionFormScreenState
     super.initState();
     final aA = ref.read(appointmentsProvider);
     final mA = ref.read(medicationsProvider);
-    if (aA.hasValue && mA.hasValue) {
+    if (aA.hasValue && !aA.isLoading && mA.hasValue && !mA.isLoading) {
       _appointments = aA.requireValue;
       _medications = mA.requireValue;
       _loadingDropdowns = false;
@@ -131,7 +132,7 @@ class _PrescriptionFormScreenState
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

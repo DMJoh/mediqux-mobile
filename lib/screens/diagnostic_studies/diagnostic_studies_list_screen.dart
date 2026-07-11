@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:mediqux_mobile/models/diagnostic_study/diagnostic_study.dart';
 import 'package:mediqux_mobile/providers/diagnostic_study_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 import 'package:mediqux_mobile/widgets/app_drawer.dart';
 
 class DiagnosticStudiesListScreen extends ConsumerStatefulWidget {
@@ -123,7 +124,7 @@ class _DiagnosticStudiesListScreenState
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _ErrorState(
-                  message: e.toString(),
+                  message: friendlyError(e),
                   onRetry: () =>
                       ref.read(diagnosticStudiesProvider.notifier).refresh(),
                 ),

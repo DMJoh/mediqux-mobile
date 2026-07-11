@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/appointment/appointment.dart';
 import 'package:mediqux_mobile/providers/appointment_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 class AppointmentDetailScreen extends ConsumerWidget {
   const AppointmentDetailScreen({required this.appointmentId, super.key});
@@ -58,7 +59,7 @@ class AppointmentDetailScreen extends ConsumerWidget {
       await ref.read(appointmentsProvider.notifier).delete(apt.id);
       if (context.mounted) context.pop();
     } on Object catch (e) {
-      final msg = e.toString();
+      final msg = friendlyError(e);
       final isConflict = msg.contains('409') || msg.contains('test result');
       if (context.mounted) {
         await showDialog<void>(
@@ -98,7 +99,7 @@ class AppointmentDetailScreen extends ConsumerWidget {
             children: [
               Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
               const SizedBox(height: 16),
-              Text(e.toString()),
+              Text(friendlyError(e)),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => context.pop(),

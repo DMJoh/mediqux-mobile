@@ -6,6 +6,7 @@ import 'package:mediqux_mobile/models/dashboard/appointment_stats.dart';
 import 'package:mediqux_mobile/models/dashboard/upcoming_appointment.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
 import 'package:mediqux_mobile/providers/dashboard_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 import 'package:mediqux_mobile/widgets/app_drawer.dart';
 import 'package:mediqux_mobile/widgets/mediqux_logo.dart';
 
@@ -302,7 +303,7 @@ class _AppointmentsSliver extends StatelessWidget {
       error: (e, _) => SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: _ErrorCard(message: e.toString()),
+          child: _ErrorCard(message: friendlyError(e)),
         ),
       ),
       data: (list) {
@@ -327,8 +328,8 @@ class _AppointmentCard extends StatelessWidget {
 
   final UpcomingAppointment appointment;
 
-  static Color _typeColor(String type) {
-    switch (type.toLowerCase()) {
+  static Color _typeColor(String? type) {
+    switch ((type ?? '').toLowerCase()) {
       case 'emergency':
         return const Color(0xFFEF5350);
       case 'follow-up':
@@ -356,7 +357,7 @@ class _AppointmentCard extends StatelessWidget {
         ? 'Today · ${DateFormat.jm().format(date)}'
         : DateFormat('EEE, MMM d · h:mm a').format(date);
 
-    final typeColor = _typeColor(appointment.type);
+    final typeColor = _typeColor(appointment.type ?? '');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -437,7 +438,7 @@ class _AppointmentCard extends StatelessWidget {
               borderRadius: const BorderRadius.all(Radius.circular(20)),
             ),
             child: Text(
-              appointment.type,
+              appointment.type ?? '—',
               style: tt.labelSmall?.copyWith(
                 color: typeColor,
                 fontWeight: FontWeight.w600,

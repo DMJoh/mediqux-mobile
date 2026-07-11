@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:mediqux_mobile/models/lab_report/lab_report.dart';
 import 'package:mediqux_mobile/providers/lab_report_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 import 'package:mediqux_mobile/widgets/app_drawer.dart';
 
 class LabReportsListScreen extends ConsumerStatefulWidget {
@@ -121,7 +122,7 @@ class _LabReportsListScreenState extends ConsumerState<LabReportsListScreen> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _ErrorState(
-                  message: e.toString(),
+                  message: friendlyError(e),
                   onRetry: () =>
                       ref.read(labReportsProvider.notifier).refresh(),
                 ),

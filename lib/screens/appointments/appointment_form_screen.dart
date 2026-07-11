@@ -11,6 +11,7 @@ import 'package:mediqux_mobile/providers/appointment_provider.dart';
 import 'package:mediqux_mobile/providers/doctor_provider.dart';
 import 'package:mediqux_mobile/providers/institution_provider.dart';
 import 'package:mediqux_mobile/providers/patient_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 const _kTypes = [
   'Consultation',
@@ -65,7 +66,12 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
     final pA = ref.read(patientsProvider);
     final dA = ref.read(doctorsProvider);
     final iA = ref.read(institutionsProvider);
-    if (pA.hasValue && dA.hasValue && iA.hasValue) {
+    if (pA.hasValue &&
+        !pA.isLoading &&
+        dA.hasValue &&
+        !dA.isLoading &&
+        iA.hasValue &&
+        !iA.isLoading) {
       _patients = pA.requireValue;
       _doctors = dA.requireValue;
       _institutions = iA.requireValue;
@@ -180,7 +186,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

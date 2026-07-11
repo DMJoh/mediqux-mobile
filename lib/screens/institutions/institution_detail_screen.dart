@@ -5,6 +5,7 @@ import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/institution/institution.dart';
 import 'package:mediqux_mobile/providers/institution_provider.dart';
 import 'package:mediqux_mobile/screens/institutions/institutions_list_screen.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 class InstitutionDetailScreen extends ConsumerWidget {
   const InstitutionDetailScreen({required this.institutionId, super.key});
@@ -83,7 +84,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
             children: [
               Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
               const SizedBox(height: 16),
-              Text(e.toString()),
+              Text(friendlyError(e)),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => context.pop(),

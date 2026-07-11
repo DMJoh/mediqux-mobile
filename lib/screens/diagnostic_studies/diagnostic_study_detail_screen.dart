@@ -7,6 +7,7 @@ import 'package:mediqux_mobile/models/diagnostic_study/diagnostic_study.dart';
 import 'package:mediqux_mobile/providers/diagnostic_study_provider.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -89,7 +90,7 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
             children: [
               Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
               const SizedBox(height: 16),
-              Text(e.toString()),
+              Text(friendlyError(e)),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => context.pop(),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/institution/institution.dart';
 import 'package:mediqux_mobile/providers/institution_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 import 'package:mediqux_mobile/widgets/app_drawer.dart';
 
 // Returns icon and color for a given institution type.
@@ -141,7 +142,7 @@ class _InstitutionsListScreenState
       body: institutionsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorState(
-          message: e.toString(),
+          message: friendlyError(e),
           onRetry: () => ref.read(institutionsProvider.notifier).refresh(),
         ),
         data: (list) {

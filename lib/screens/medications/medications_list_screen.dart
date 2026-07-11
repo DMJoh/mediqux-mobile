@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/medication/medication.dart';
 import 'package:mediqux_mobile/providers/medication_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 import 'package:mediqux_mobile/widgets/app_drawer.dart';
 
 class MedicationsListScreen extends ConsumerStatefulWidget {
@@ -107,7 +108,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: _ErrorState(
-                  message: e.toString(),
+                  message: friendlyError(e),
                   onRetry: () =>
                       ref.read(medicationsProvider.notifier).refresh(),
                 ),

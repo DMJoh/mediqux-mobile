@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/doctor/doctor.dart';
 import 'package:mediqux_mobile/models/doctor/doctor_request.dart';
 import 'package:mediqux_mobile/providers/doctor_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 class DoctorFormScreen extends ConsumerStatefulWidget {
   const DoctorFormScreen({super.key, this.doctorId});
@@ -82,7 +83,7 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

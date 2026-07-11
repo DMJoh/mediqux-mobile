@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:mediqux_mobile/models/patient/patient.dart';
 import 'package:mediqux_mobile/models/patient/patient_request.dart';
 import 'package:mediqux_mobile/providers/patient_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 class PatientFormScreen extends ConsumerStatefulWidget {
   const PatientFormScreen({super.key, this.patientId});
@@ -122,7 +123,7 @@ class _PatientFormScreenState extends ConsumerState<PatientFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
