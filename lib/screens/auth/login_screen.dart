@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,21 +74,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     return url;
   }
 
-  Future<bool> _testConnection(String url) async {
-    try {
-      final dio = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 8),
-          receiveTimeout: const Duration(seconds: 8),
-        ),
-      );
-      final response = await dio.get<dynamic>('$url/health');
-      return response.statusCode == 200;
-    } on Object {
-      return false;
-    }
-  }
-
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
@@ -99,20 +83,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     });
 
     final url = _normaliseUrl(_serverController.text);
-    final reachable = await _testConnection(url);
-
-    if (!mounted) return;
-
-    if (!reachable) {
-      setState(() {
-        _isLoading = false;
-        _serverError =
-            'Could not reach the server. '
-            'Check the address and try again.';
-      });
-      return;
-    }
-
     await ref.read(serverConfigProvider.notifier).setUrl(url);
     if (!mounted) return;
 
