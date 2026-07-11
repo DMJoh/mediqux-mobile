@@ -36,5 +36,34 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
+  // Retry GET requests once after 2 s on connection-level failures.
+  // This handles Android Doze: network is briefly unavailable right after
+  // the phone wakes and the app starts, then stabilises within seconds.
+  dio.interceptors.add(
+    InterceptorsWrapper(
+      onError: (error, handler) async {
+        final opts = error.requestOptions;
+        final isGet = opts.method == 'GET';
+        final alreadyRetried = opts.extra['_retried'] == true;
+        final isConnectError =
+            error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.connectionError;
+        if (isGet && isConnectError && !alreadyRetried) {
+          await Future<void>.delayed(const Duration(seconds: 2));
+          try {
+            final retryOpts = opts.copyWith(
+              extra: {...opts.extra, '_retried': true},
+            );
+            final response = await dio.fetch<dynamic>(retryOpts);
+            return handler.resolve(response);
+          } on Object {
+            // retry also failed — fall through to original error
+          }
+        }
+        return handler.next(error);
+      },
+    ),
+  );
+
   return dio;
 });
