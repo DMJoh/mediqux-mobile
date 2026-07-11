@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/models/diagnostic_study/diagnostic_study.dart';
+import 'package:mediqux_mobile/providers/auth_provider.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
 import 'package:mediqux_mobile/services/diagnostic_study_api.dart';
@@ -12,7 +13,9 @@ part 'diagnostic_study_provider.g.dart';
 class DiagnosticStudies extends _$DiagnosticStudies {
   @override
   Future<List<DiagnosticStudy>> build() async {
-    final api = DiagnosticStudyApi(ref.watch(dioProvider));
+    if (ref.watch(authProvider).valueOrNull == null) return [];
+    await ref.watch(serverConfigProvider.future);
+    final api = DiagnosticStudyApi(ref.read(dioProvider));
     final response = await api.getStudies();
     return response.data ?? [];
   }
@@ -82,8 +85,8 @@ class DiagnosticStudies extends _$DiagnosticStudies {
       } else {
         await refresh();
       }
-    } on DioException catch (e) {
-      throw Exception(_extractError(e));
+    } on DioException {
+      rethrow;
     }
   }
 
@@ -147,8 +150,8 @@ class DiagnosticStudies extends _$DiagnosticStudies {
       } else {
         await refresh();
       }
-    } on DioException catch (e) {
-      throw Exception(_extractError(e));
+    } on DioException {
+      rethrow;
     }
   }
 
@@ -158,29 +161,8 @@ class DiagnosticStudies extends _$DiagnosticStudies {
       await api.deleteStudy(id);
       final current = state.valueOrNull ?? [];
       state = AsyncValue.data(current.where((s) => s.id != id).toList());
-    } on DioException catch (e) {
-      throw Exception(_extractError(e));
-    }
-  }
-
-  String _extractError(DioException e) {
-    final data = e.response?.data;
-    if (data is Map<String, dynamic>) {
-      final msg = data['error'];
-      if (msg is String && msg.isNotEmpty) return msg;
-    }
-    switch (e.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        return 'Connection timed out. Please try again.';
-      case DioExceptionType.connectionError:
-        return 'Cannot reach the server. Check your connection.';
-      case DioExceptionType.badResponse:
-      case DioExceptionType.badCertificate:
-      case DioExceptionType.cancel:
-      case DioExceptionType.unknown:
-        return 'Network error. Please try again.';
+    } on DioException {
+      rethrow;
     }
   }
 }
