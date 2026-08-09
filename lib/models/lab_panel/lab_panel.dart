@@ -62,9 +62,10 @@ class LabPanel {
       category: json['category'] as String?,
       parameters: params is List
           ? params
-              .map((e) =>
-                  LabPanelParameter.fromJson(e as Map<String, dynamic>))
-              .toList()
+                .map(
+                  (e) => LabPanelParameter.fromJson(e as Map<String, dynamic>),
+                )
+                .toList()
           : const [],
     );
   }
