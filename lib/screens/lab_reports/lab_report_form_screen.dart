@@ -144,15 +144,13 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
       _selectedAppointmentId = report.appointmentId;
       _selectedInstitutionId =
           _institutions.any((i) => i.name == report.institutionName)
-          ? _institutions
-              .firstWhere((i) => i.name == report.institutionName)
-              .id
+          ? _institutions.firstWhere((i) => i.name == report.institutionName).id
           : null;
       _selectedDoctorId = report.performedBy != null
           ? _doctors
-              .where((d) => d.id == report.performedBy!.id)
-              .map((d) => d.id)
-              .firstOrNull
+                .where((d) => d.id == report.performedBy!.id)
+                .map((d) => d.id)
+                .firstOrNull
           : null;
       for (final lv in report.labValues ?? <LabValue>[]) {
         final entry = _LabValueEntry(
@@ -163,8 +161,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
         entry.valueCtrl.text = lv.value == lv.value.truncateToDouble()
             ? lv.value.toInt().toString()
             : lv.value.toStringAsFixed(2);
-        entry.status =
-            lv.status[0].toUpperCase() + lv.status.substring(1);
+        entry.status = lv.status[0].toUpperCase() + lv.status.substring(1);
         if (!_statuses.contains(entry.status)) entry.status = 'Normal';
         _labValues.add(entry);
       }
@@ -226,9 +223,11 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
     final panelsAsync = ref.read(labPanelsProvider);
     final panels = panelsAsync.valueOrNull;
     if (panels == null) {
-      unawaited(ref.read(labPanelsProvider.future).then((_) {
-        if (mounted) _showPanelPicker();
-      }));
+      unawaited(
+        ref.read(labPanelsProvider.future).then((_) {
+          if (mounted) _showPanelPicker();
+        }),
+      );
       return;
     }
     if (!mounted) return;
@@ -275,44 +274,50 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
     try {
       final labValues = _collectLabValues();
       if (_isEdit) {
-        await ref.read(labReportsProvider.notifier).saveEdit(
-          id: widget.reportId!,
-          testName: _testNameCtrl.text.trim(),
-          testType: _selectedTestType!,
-          testDate: _selectedDate!,
-          appointmentId: _selectedAppointmentId,
-          institutionId: _selectedInstitutionId,
-          performedById: _selectedDoctorId,
-          labValues: labValues,
-        );
+        await ref
+            .read(labReportsProvider.notifier)
+            .saveEdit(
+              id: widget.reportId!,
+              testName: _testNameCtrl.text.trim(),
+              testType: _selectedTestType!,
+              testDate: _selectedDate!,
+              appointmentId: _selectedAppointmentId,
+              institutionId: _selectedInstitutionId,
+              performedById: _selectedDoctorId,
+              labValues: labValues,
+            );
         if (mounted) {
           ref.invalidate(labReportDetailProvider(widget.reportId!));
           context.pop();
         }
       } else if (_filePath != null) {
-        await ref.read(labReportsProvider.notifier).upload(
-          patientId: _selectedPatientId!,
-          testName: _testNameCtrl.text.trim(),
-          testType: _selectedTestType!,
-          testDate: _selectedDate!,
-          appointmentId: _selectedAppointmentId,
-          institutionId: _selectedInstitutionId,
-          performedById: _selectedDoctorId,
-          filePath: _filePath!,
-          fileName: _fileName!,
-        );
+        await ref
+            .read(labReportsProvider.notifier)
+            .upload(
+              patientId: _selectedPatientId!,
+              testName: _testNameCtrl.text.trim(),
+              testType: _selectedTestType!,
+              testDate: _selectedDate!,
+              appointmentId: _selectedAppointmentId,
+              institutionId: _selectedInstitutionId,
+              performedById: _selectedDoctorId,
+              filePath: _filePath!,
+              fileName: _fileName!,
+            );
         if (mounted) context.pop();
       } else {
-        await ref.read(labReportsProvider.notifier).create(
-          patientId: _selectedPatientId!,
-          testName: _testNameCtrl.text.trim(),
-          testType: _selectedTestType!,
-          testDate: _selectedDate!,
-          appointmentId: _selectedAppointmentId,
-          institutionId: _selectedInstitutionId,
-          performedById: _selectedDoctorId,
-          labValues: labValues,
-        );
+        await ref
+            .read(labReportsProvider.notifier)
+            .create(
+              patientId: _selectedPatientId!,
+              testName: _testNameCtrl.text.trim(),
+              testType: _selectedTestType!,
+              testDate: _selectedDate!,
+              appointmentId: _selectedAppointmentId,
+              institutionId: _selectedInstitutionId,
+              performedById: _selectedDoctorId,
+              labValues: labValues,
+            );
         if (mounted) context.pop();
       }
     } on Object catch (e) {
@@ -399,15 +404,16 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                         )
                         .toList(),
                     onChanged: (v) => setState(() => _selectedPatientId = v),
-                    validator: (v) =>
-                        v == null ? 'Patient is required' : null,
+                    validator: (v) => v == null ? 'Patient is required' : null,
                   )
                 else
                   TextFormField(
-                    initialValue: _patients
-                        .where((p) => p.id == _selectedPatientId)
-                        .map((p) => p.fullName)
-                        .firstOrNull ?? '',
+                    initialValue:
+                        _patients
+                            .where((p) => p.id == _selectedPatientId)
+                            .map((p) => p.fullName)
+                            .firstOrNull ??
+                        '',
                     readOnly: true,
                     decoration: const InputDecoration(labelText: 'Patient'),
                   ),
@@ -427,8 +433,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                       .toList(),
                   onChanged: (v) => setState(() => _selectedTestType = v),
-                  validator: (v) =>
-                      v == null ? 'Test type is required' : null,
+                  validator: (v) => v == null ? 'Test type is required' : null,
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(
@@ -469,8 +474,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                       ),
                     ),
                   ],
-                  onChanged: (v) =>
-                      setState(() => _selectedAppointmentId = v),
+                  onChanged: (v) => setState(() => _selectedAppointmentId = v),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -484,15 +488,11 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                     ..._institutions.map(
                       (i) => DropdownMenuItem(
                         value: i.id,
-                        child: Text(
-                          i.name,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        child: Text(i.name, overflow: TextOverflow.ellipsis),
                       ),
                     ),
                   ],
-                  onChanged: (v) =>
-                      setState(() => _selectedInstitutionId = v),
+                  onChanged: (v) => setState(() => _selectedInstitutionId = v),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -549,9 +549,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Text(
                       'No lab values. Load a panel or add rows manually.',
-                      style: tt.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                       textAlign: TextAlign.center,
                     ),
                   )
@@ -742,9 +740,7 @@ class _LabValueRowWidgetState extends State<_LabValueRowWidget> {
                     isDense: true,
                   ),
                   items: _statuses
-                      .map(
-                        (s) => DropdownMenuItem(value: s, child: Text(s)),
-                      )
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                       .toList(),
                   onChanged: (v) {
                     if (v != null) {
@@ -762,10 +758,7 @@ class _LabValueRowWidgetState extends State<_LabValueRowWidget> {
 }
 
 class _PanelPickerSheet extends StatelessWidget {
-  const _PanelPickerSheet({
-    required this.panels,
-    required this.onSelected,
-  });
+  const _PanelPickerSheet({required this.panels, required this.onSelected});
 
   final List<LabPanel> panels;
   final void Function(LabPanel) onSelected;
@@ -808,9 +801,7 @@ class _PanelPickerSheet extends StatelessWidget {
                         title: Text(panel.name),
                         subtitle: Text(
                           '${panel.parameters.length} parameters'
-                          '${panel.category != null
-                              ? ' · ${panel.category}'
-                              : ''}',
+                          '${panel.category != null ? ' · ${panel.category}' : ''}',
                           style: tt.bodySmall?.copyWith(
                             color: cs.onSurfaceVariant,
                           ),
