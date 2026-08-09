@@ -95,8 +95,7 @@ class LabReports extends _$LabReports {
       );
       final data = response.data;
       if (data != null && data['data'] != null) {
-        final report =
-            LabReport.fromJson(data['data'] as Map<String, dynamic>);
+        final report = LabReport.fromJson(data['data'] as Map<String, dynamic>);
         final current = state.valueOrNull ?? [];
         state = AsyncValue.data([report, ...current]);
       } else {
@@ -163,11 +162,8 @@ Future<List<LabPanel>> labPanels(Ref ref) async {
   if (ref.watch(authProvider).valueOrNull == null) return [];
   final dio = ref.watch(dioProvider);
   final serverUrl = ref.watch(serverConfigProvider).valueOrNull ?? '';
-  final response =
-      await dio.get<dynamic>('$serverUrl/test-results/panels');
+  final response = await dio.get<dynamic>('$serverUrl/test-results/panels');
   final data = response.data;
   if (data is! List) return [];
-  return data
-      .map((e) => LabPanel.fromJson(e as Map<String, dynamic>))
-      .toList();
+  return data.map((e) => LabPanel.fromJson(e as Map<String, dynamic>)).toList();
 }

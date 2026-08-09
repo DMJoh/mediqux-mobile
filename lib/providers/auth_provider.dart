@@ -23,9 +23,9 @@ bool _isJwtExpired(String token) {
       case 3:
         payload += '=';
     }
-    final json = jsonDecode(
-      utf8.decode(base64Url.decode(payload)),
-    ) as Map<String, dynamic>;
+    final json =
+        jsonDecode(utf8.decode(base64Url.decode(payload)))
+            as Map<String, dynamic>;
     final exp = json['exp'];
     if (exp == null) return false;
     return DateTime.now().millisecondsSinceEpoch > (exp as num).toInt() * 1000;
