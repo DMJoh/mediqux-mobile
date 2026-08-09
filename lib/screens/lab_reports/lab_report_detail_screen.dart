@@ -109,6 +109,12 @@ class LabReportDetailScreen extends ConsumerWidget {
                 ),
                 actions: [
                   IconButton(
+                    icon: const Icon(Icons.edit_rounded, color: Colors.white),
+                    tooltip: 'Edit',
+                    onPressed: () =>
+                        context.push('/lab-reports/${report.id}/edit'),
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.delete_rounded, color: Colors.white),
                     tooltip: 'Delete',
                     onPressed: () => _confirmDelete(context, ref, report),

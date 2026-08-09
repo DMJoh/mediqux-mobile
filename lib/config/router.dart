@@ -127,6 +127,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => LabReportDetailScreen(
               reportId: state.pathParameters['id'] ?? '',
             ),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (_, state) => LabReportFormScreen(
+                  reportId: state.pathParameters['id'],
+                ),
+              ),
+            ],
           ),
         ],
       ),
