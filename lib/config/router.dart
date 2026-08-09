@@ -130,9 +130,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'edit',
-                builder: (_, state) => LabReportFormScreen(
-                  reportId: state.pathParameters['id'],
-                ),
+                builder: (_, state) =>
+                    LabReportFormScreen(reportId: state.pathParameters['id']),
               ),
             ],
           ),
