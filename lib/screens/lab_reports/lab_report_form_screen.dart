@@ -800,8 +800,10 @@ class _PanelPickerSheet extends StatelessWidget {
                       return ListTile(
                         title: Text(panel.name),
                         subtitle: Text(
-                          '${panel.parameters.length} parameters'
-                          '${panel.category != null ? ' · ${panel.category}' : ''}',
+                          [
+                            '${panel.parameters.length} parameters',
+                            if (panel.category != null) panel.category!,
+                          ].join(' · '),
                           style: tt.bodySmall?.copyWith(
                             color: cs.onSurfaceVariant,
                           ),
