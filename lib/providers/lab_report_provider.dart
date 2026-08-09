@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:mediqux_mobile/models/lab_panel/lab_panel.dart';
 import 'package:mediqux_mobile/models/lab_report/lab_report.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
@@ -8,6 +10,8 @@ import 'package:mediqux_mobile/services/lab_report_api.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'lab_report_provider.g.dart';
+
+final _dateFmt = DateFormat('yyyy-MM-dd');
 
 @Riverpod(keepAlive: true)
 class LabReports extends _$LabReports {
@@ -31,30 +35,68 @@ class LabReports extends _$LabReports {
   Future<void> upload({
     required String patientId,
     required String testName,
+    required String testType,
     required DateTime testDate,
     required String filePath,
     required String fileName,
     String? appointmentId,
-    String? notes,
+    String? institutionId,
+    String? performedById,
   }) async {
     final dio = ref.read(dioProvider);
     final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
     try {
       final formData = FormData.fromMap({
-        'patient_id': patientId,
-        'test_name': testName,
-        'test_date': testDate.toIso8601String(),
-        if (appointmentId != null) 'appointment_id': appointmentId,
-        if (notes != null && notes.isNotEmpty) 'notes': notes,
+        'patientId': patientId,
+        'testName': testName,
+        'testType': testType,
+        'testDate': _dateFmt.format(testDate),
+        if (appointmentId != null) 'appointmentId': appointmentId,
+        if (institutionId != null) 'institutionId': institutionId,
+        if (performedById != null) 'performedById': performedById,
         'pdfFile': await MultipartFile.fromFile(filePath, filename: fileName),
       });
-      final response = await dio.post<Map<String, dynamic>>(
+      await dio.post<Map<String, dynamic>>(
         '$serverUrl/test-results/upload',
         data: formData,
       );
+      await refresh();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  Future<void> create({
+    required String patientId,
+    required String testName,
+    required String testType,
+    required DateTime testDate,
+    String? appointmentId,
+    String? institutionId,
+    String? performedById,
+    List<Map<String, dynamic>>? labValues,
+  }) async {
+    final dio = ref.read(dioProvider);
+    final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+    try {
+      final body = <String, dynamic>{
+        'patient_id': patientId,
+        'test_name': testName,
+        'test_type': testType,
+        'test_date': _dateFmt.format(testDate),
+        if (appointmentId != null) 'appointment_id': appointmentId,
+        if (institutionId != null) 'institution_id': institutionId,
+        if (performedById != null) 'performed_by_id': performedById,
+        if (labValues != null && labValues.isNotEmpty) 'lab_values': labValues,
+      };
+      final response = await dio.post<Map<String, dynamic>>(
+        '$serverUrl/test-results',
+        data: body,
+      );
       final data = response.data;
       if (data != null && data['data'] != null) {
-        final report = LabReport.fromJson(data['data'] as Map<String, dynamic>);
+        final report =
+            LabReport.fromJson(data['data'] as Map<String, dynamic>);
         final current = state.valueOrNull ?? [];
         state = AsyncValue.data([report, ...current]);
       } else {
@@ -65,37 +107,33 @@ class LabReports extends _$LabReports {
     }
   }
 
-  Future<void> create({
-    required String patientId,
+  Future<void> saveEdit({
+    required String id,
     required String testName,
+    required String testType,
     required DateTime testDate,
     String? appointmentId,
-    String? notes,
-    String? status,
+    String? institutionId,
+    String? performedById,
+    List<Map<String, dynamic>>? labValues,
   }) async {
     final dio = ref.read(dioProvider);
     final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
     try {
       final body = <String, dynamic>{
-        'patient_id': patientId,
         'test_name': testName,
-        'test_date': testDate.toIso8601String(),
-        if (appointmentId != null) 'appointment_id': appointmentId,
-        if (notes != null && notes.isNotEmpty) 'notes': notes,
-        if (status != null) 'status': status,
+        'test_type': testType,
+        'test_date': _dateFmt.format(testDate),
+        'appointment_id': appointmentId,
+        'institution_id': institutionId,
+        'performed_by_id': performedById,
+        'lab_values': labValues ?? [],
       };
-      final response = await dio.post<Map<String, dynamic>>(
-        '$serverUrl/test-results',
+      await dio.put<Map<String, dynamic>>(
+        '$serverUrl/test-results/$id',
         data: body,
       );
-      final data = response.data;
-      if (data != null && data['data'] != null) {
-        final report = LabReport.fromJson(data['data'] as Map<String, dynamic>);
-        final current = state.valueOrNull ?? [];
-        state = AsyncValue.data([report, ...current]);
-      } else {
-        await refresh();
-      }
+      await refresh();
     } on DioException {
       rethrow;
     }
@@ -118,4 +156,18 @@ Future<LabReport> labReportDetail(Ref ref, String reportId) async {
   final api = LabReportApi(ref.watch(dioProvider));
   final response = await api.getLabReport(reportId);
   return response.data!;
+}
+
+@riverpod
+Future<List<LabPanel>> labPanels(Ref ref) async {
+  if (ref.watch(authProvider).valueOrNull == null) return [];
+  final dio = ref.watch(dioProvider);
+  final serverUrl = ref.watch(serverConfigProvider).valueOrNull ?? '';
+  final response =
+      await dio.get<dynamic>('$serverUrl/test-results/panels');
+  final data = response.data;
+  if (data is! List) return [];
+  return data
+      .map((e) => LabPanel.fromJson(e as Map<String, dynamic>))
+      .toList();
 }
