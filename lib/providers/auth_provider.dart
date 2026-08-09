@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:mediqux_mobile/models/auth/login_request.dart';
 import 'package:mediqux_mobile/models/user.dart';
@@ -10,6 +12,28 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_provider.g.dart';
 
+bool _isJwtExpired(String token) {
+  try {
+    final parts = token.split('.');
+    if (parts.length != 3) return false;
+    var payload = parts[1];
+    switch (payload.length % 4) {
+      case 2:
+        payload += '==';
+      case 3:
+        payload += '=';
+    }
+    final json = jsonDecode(
+      utf8.decode(base64Url.decode(payload)),
+    ) as Map<String, dynamic>;
+    final exp = json['exp'];
+    if (exp == null) return false;
+    return DateTime.now().millisecondsSinceEpoch > (exp as num).toInt() * 1000;
+  } on Object {
+    return false;
+  }
+}
+
 @Riverpod(keepAlive: true)
 class Auth extends _$Auth {
   @override
@@ -18,6 +42,10 @@ class Auth extends _$Auth {
     final storage = ref.watch(storageServiceProvider);
     final token = await storage.readToken();
     if (token == null) return null;
+    if (_isJwtExpired(token)) {
+      await storage.clearAuth();
+      return null;
+    }
     return storage.readUser();
   }
 

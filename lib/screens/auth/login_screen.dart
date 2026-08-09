@@ -31,12 +31,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     WidgetsBinding.instance.addObserver(this);
   }
 
-  // Bitwarden's autofill service triggers HIDE_SAME_WINDOW_FOCUSED_WITHOUT_EDITOR
-  // at the Android IME layer, dropping the keyboard without calling Flutter's
-  // unfocus(). Flutter's logical hasFocus therefore stays true while the keyboard
-  // is hidden. We detect this mismatch here and re-request focus to restore the
-  // keyboard. When the user presses back, Flutter calls unfocus() first, so
-  // hasFocus is already false by the time this fires — no conflict.
   @override
   void didChangeMetrics() {
     if (!_passwordFocus.hasFocus || _isLoading) return;
@@ -128,7 +122,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           SafeArea(
             child: Column(
               children: [
-                // ── Brand area ──────────────────────────
                 Expanded(
                   flex: 3,
                   child: Column(
@@ -156,7 +149,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   ),
                 ),
 
-                // ── Form card ───────────────────────────
                 Expanded(
                   flex: 7,
                   child: Container(
@@ -189,7 +181,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             ),
                             const SizedBox(height: 24),
 
-                            // Server URL — outside autofill group
                             TextFormField(
                               controller: _serverController,
                               keyboardType: TextInputType.url,
