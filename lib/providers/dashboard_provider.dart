@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/models/dashboard/appointment_stats.dart';
 import 'package:mediqux_mobile/models/dashboard/upcoming_appointment.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';

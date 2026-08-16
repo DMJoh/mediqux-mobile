@@ -15,7 +15,7 @@ class AppDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final user = ref.watch(authProvider).valueOrNull;
+    final user = ref.watch(authProvider).value;
 
     return Drawer(
       child: SafeArea(

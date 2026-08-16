@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/models/appointment/appointment.dart';
 import 'package:mediqux_mobile/models/appointment/appointment_request.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
@@ -16,7 +15,7 @@ part 'appointment_provider.g.dart';
 class Appointments extends _$Appointments {
   @override
   Future<List<Appointment>> build() async {
-    if (ref.watch(authProvider).valueOrNull == null) return [];
+    if (ref.watch(authProvider).value == null) return [];
     await ref.watch(serverConfigProvider.future);
     final api = AppointmentApi(ref.read(dioProvider));
     final response = await api.getAppointments();
@@ -40,7 +39,7 @@ class Appointments extends _$Appointments {
     try {
       final response = await api.createAppointment(request);
       final appointment = response.data!;
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data([appointment, ...current]);
       // Server response from create may lack denormalized fields (patient name
       // etc.) — silently re-fetch to get the fully populated record.
@@ -59,7 +58,7 @@ class Appointments extends _$Appointments {
     try {
       final response = await api.updateAppointment(id, request);
       final updated = response.data!;
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(
         current.map((a) => a.id == id ? updated : a).toList(),
       );
@@ -87,7 +86,7 @@ class Appointments extends _$Appointments {
     final api = AppointmentApi(ref.read(dioProvider));
     try {
       await api.deleteAppointment(id);
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(current.where((a) => a.id != id).toList());
     } on DioException {
       rethrow;

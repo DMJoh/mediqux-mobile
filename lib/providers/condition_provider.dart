@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/models/condition/condition.dart';
 import 'package:mediqux_mobile/models/condition/condition_request.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
@@ -14,7 +13,7 @@ part 'condition_provider.g.dart';
 class Conditions extends _$Conditions {
   @override
   Future<List<Condition>> build() async {
-    if (ref.watch(authProvider).valueOrNull == null) return [];
+    if (ref.watch(authProvider).value == null) return [];
     await ref.watch(serverConfigProvider.future);
     final api = ConditionApi(ref.read(dioProvider));
     final response = await api.getConditions();
@@ -34,7 +33,7 @@ class Conditions extends _$Conditions {
     try {
       final response = await api.createCondition(request);
       final condition = response.data!;
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       final updated = [...current, condition]
         ..sort((a, b) => a.name.compareTo(b.name));
       state = AsyncValue.data(updated);
@@ -49,7 +48,7 @@ class Conditions extends _$Conditions {
     try {
       final response = await api.updateCondition(id, request);
       final updated = response.data!;
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(
         current.map((c) => c.id == id ? updated : c).toList(),
       );
@@ -63,7 +62,7 @@ class Conditions extends _$Conditions {
     final api = ConditionApi(ref.read(dioProvider));
     try {
       await api.deleteCondition(id);
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(current.where((c) => c.id != id).toList());
     } on DioException {
       rethrow;

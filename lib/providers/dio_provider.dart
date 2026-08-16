@@ -7,7 +7,7 @@ import 'package:mediqux_mobile/services/auth_api.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final storage = ref.watch(storageServiceProvider);
-  final serverUrl = ref.watch(serverConfigProvider).valueOrNull ?? '';
+  final serverUrl = ref.watch(serverConfigProvider).value ?? '';
 
   final dio = Dio(
     BaseOptions(
@@ -58,7 +58,7 @@ final dioProvider = Provider<Dio>((ref) {
             }
           }
           await storage.clearAuth();
-          ref.read(sessionVersionProvider.notifier).state++;
+          ref.read(sessionVersionProvider.notifier).increment();
         }
         return handler.next(error);
       },

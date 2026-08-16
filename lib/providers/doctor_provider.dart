@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/models/doctor/doctor.dart';
 import 'package:mediqux_mobile/models/doctor/doctor_request.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
@@ -14,7 +13,7 @@ part 'doctor_provider.g.dart';
 class Doctors extends _$Doctors {
   @override
   Future<List<Doctor>> build() async {
-    if (ref.watch(authProvider).valueOrNull == null) return [];
+    if (ref.watch(authProvider).value == null) return [];
     await ref.watch(serverConfigProvider.future);
     final api = DoctorApi(ref.read(dioProvider));
     final response = await api.getDoctors();
@@ -34,7 +33,7 @@ class Doctors extends _$Doctors {
     try {
       final response = await api.createDoctor(request);
       final doctor = response.data!;
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       final updated = [...current, doctor]
         ..sort((a, b) => a.lastName.compareTo(b.lastName));
       state = AsyncValue.data(updated);
@@ -49,7 +48,7 @@ class Doctors extends _$Doctors {
     try {
       final response = await api.updateDoctor(id, request);
       final updated = response.data!;
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(
         current.map((d) => d.id == id ? updated : d).toList(),
       );
@@ -63,7 +62,7 @@ class Doctors extends _$Doctors {
     final api = DoctorApi(ref.read(dioProvider));
     try {
       await api.deleteDoctor(id);
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(current.where((d) => d.id != id).toList());
     } on DioException {
       rethrow;

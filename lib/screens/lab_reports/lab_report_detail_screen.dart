@@ -53,7 +53,7 @@ class LabReportDetailScreen extends ConsumerWidget {
   ) async {
     try {
       final dio = ref.read(dioProvider);
-      final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+      final serverUrl = ref.read(serverConfigProvider).value ?? '';
       final tmpDir = await getTemporaryDirectory();
       final tmpPath = '${tmpDir.path}/mediqux_report_$reportId.pdf';
       await dio.download('$serverUrl/test-results/$reportId/view', tmpPath);

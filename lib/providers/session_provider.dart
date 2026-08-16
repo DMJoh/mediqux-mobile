@@ -1,3 +1,11 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-final sessionVersionProvider = StateProvider<int>((ref) => 0);
+part 'session_provider.g.dart';
+
+@riverpod
+class SessionVersion extends _$SessionVersion {
+  @override
+  int build() => 0;
+
+  void increment() => state++;
+}

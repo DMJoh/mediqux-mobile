@@ -164,7 +164,7 @@ class _RouterNotifier extends ChangeNotifier {
     if (_authState.isLoading) return null;
 
     final loc = state.matchedLocation;
-    final isLoggedIn = _authState.valueOrNull != null;
+    final isLoggedIn = _authState.value != null;
 
     if (!isLoggedIn && loc != '/login') return '/login';
     if (isLoggedIn && loc == '/login') return '/';

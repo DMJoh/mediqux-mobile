@@ -86,7 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     if (!mounted) return;
 
-    if (ref.read(authProvider).valueOrNull != null) {
+    if (ref.read(authProvider).value != null) {
       TextInput.finishAutofillContext();
     }
 
@@ -96,7 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   @override
   Widget build(BuildContext context) {
     if (!_initialized) {
-      final existing = ref.read(serverConfigProvider).valueOrNull;
+      final existing = ref.read(serverConfigProvider).value;
       if (existing != null) {
         _serverController.text = existing.replaceFirst(RegExp(r'/api$'), '');
       }

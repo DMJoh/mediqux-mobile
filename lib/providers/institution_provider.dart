@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/models/institution/institution.dart';
 import 'package:mediqux_mobile/models/institution/institution_request.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
@@ -14,7 +13,7 @@ part 'institution_provider.g.dart';
 class Institutions extends _$Institutions {
   @override
   Future<List<Institution>> build() async {
-    if (ref.watch(authProvider).valueOrNull == null) return [];
+    if (ref.watch(authProvider).value == null) return [];
     await ref.watch(serverConfigProvider.future);
     final api = InstitutionApi(ref.read(dioProvider));
     final response = await api.getInstitutions();
@@ -34,7 +33,7 @@ class Institutions extends _$Institutions {
     try {
       final response = await api.createInstitution(request);
       final institution = response.data!;
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       final updated = [...current, institution]
         ..sort((a, b) => a.name.compareTo(b.name));
       state = AsyncValue.data(updated);
@@ -52,7 +51,7 @@ class Institutions extends _$Institutions {
     try {
       final response = await api.updateInstitution(id, request);
       final updated = response.data!;
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(
         current.map((i) => i.id == id ? updated : i).toList(),
       );
@@ -66,7 +65,7 @@ class Institutions extends _$Institutions {
     final api = InstitutionApi(ref.read(dioProvider));
     try {
       await api.deleteInstitution(id);
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(current.where((i) => i.id != id).toList());
     } on DioException {
       rethrow;

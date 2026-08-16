@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/models/diagnostic_study/diagnostic_study.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
@@ -13,7 +12,7 @@ part 'diagnostic_study_provider.g.dart';
 class DiagnosticStudies extends _$DiagnosticStudies {
   @override
   Future<List<DiagnosticStudy>> build() async {
-    if (ref.watch(authProvider).valueOrNull == null) return [];
+    if (ref.watch(authProvider).value == null) return [];
     await ref.watch(serverConfigProvider.future);
     final api = DiagnosticStudyApi(ref.read(dioProvider));
     final response = await api.getStudies();
@@ -44,7 +43,7 @@ class DiagnosticStudies extends _$DiagnosticStudies {
     String? fileName,
   }) async {
     final dio = ref.read(dioProvider);
-    final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+    final serverUrl = ref.read(serverConfigProvider).value ?? '';
     try {
       final fields = <String, dynamic>{
         'patient_id': patientId,
@@ -80,7 +79,7 @@ class DiagnosticStudies extends _$DiagnosticStudies {
         final study = DiagnosticStudy.fromJson(
           data['data'] as Map<String, dynamic>,
         );
-        final current = state.valueOrNull ?? [];
+        final current = state.value ?? [];
         state = AsyncValue.data([study, ...current]);
       } else {
         await refresh();
@@ -107,7 +106,7 @@ class DiagnosticStudies extends _$DiagnosticStudies {
     String? fileName,
   }) async {
     final dio = ref.read(dioProvider);
-    final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+    final serverUrl = ref.read(serverConfigProvider).value ?? '';
     try {
       final fields = <String, dynamic>{
         'patient_id': patientId,
@@ -143,7 +142,7 @@ class DiagnosticStudies extends _$DiagnosticStudies {
         final updated = DiagnosticStudy.fromJson(
           data['data'] as Map<String, dynamic>,
         );
-        final current = state.valueOrNull ?? [];
+        final current = state.value ?? [];
         state = AsyncValue.data(
           current.map((s) => s.id == id ? updated : s).toList(),
         );
@@ -159,7 +158,7 @@ class DiagnosticStudies extends _$DiagnosticStudies {
     final api = DiagnosticStudyApi(ref.read(dioProvider));
     try {
       await api.deleteStudy(id);
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(current.where((s) => s.id != id).toList());
     } on DioException {
       rethrow;

@@ -29,6 +29,7 @@ String friendlyError(Object e) {
       case DioExceptionType.cancel:
         return 'Request was cancelled.';
       case DioExceptionType.unknown:
+      case DioExceptionType.transformTimeout:
         return 'Network error. Check your connection.';
     }
   }

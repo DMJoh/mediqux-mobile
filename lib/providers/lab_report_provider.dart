@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mediqux_mobile/models/lab_panel/lab_panel.dart';
 import 'package:mediqux_mobile/models/lab_report/lab_report.dart';
@@ -17,7 +16,7 @@ final _dateFmt = DateFormat('yyyy-MM-dd');
 class LabReports extends _$LabReports {
   @override
   Future<List<LabReport>> build() async {
-    if (ref.watch(authProvider).valueOrNull == null) return [];
+    if (ref.watch(authProvider).value == null) return [];
     await ref.watch(serverConfigProvider.future);
     final api = LabReportApi(ref.read(dioProvider));
     final response = await api.getLabReports();
@@ -44,7 +43,7 @@ class LabReports extends _$LabReports {
     String? performedById,
   }) async {
     final dio = ref.read(dioProvider);
-    final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+    final serverUrl = ref.read(serverConfigProvider).value ?? '';
     try {
       final formData = FormData.fromMap({
         'patientId': patientId,
@@ -77,7 +76,7 @@ class LabReports extends _$LabReports {
     List<Map<String, dynamic>>? labValues,
   }) async {
     final dio = ref.read(dioProvider);
-    final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+    final serverUrl = ref.read(serverConfigProvider).value ?? '';
     try {
       final body = <String, dynamic>{
         'patient_id': patientId,
@@ -96,7 +95,7 @@ class LabReports extends _$LabReports {
       final data = response.data;
       if (data != null && data['data'] != null) {
         final report = LabReport.fromJson(data['data'] as Map<String, dynamic>);
-        final current = state.valueOrNull ?? [];
+        final current = state.value ?? [];
         state = AsyncValue.data([report, ...current]);
       } else {
         await refresh();
@@ -117,7 +116,7 @@ class LabReports extends _$LabReports {
     List<Map<String, dynamic>>? labValues,
   }) async {
     final dio = ref.read(dioProvider);
-    final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+    final serverUrl = ref.read(serverConfigProvider).value ?? '';
     try {
       final body = <String, dynamic>{
         'test_name': testName,
@@ -142,7 +141,7 @@ class LabReports extends _$LabReports {
     final api = LabReportApi(ref.read(dioProvider));
     try {
       await api.deleteLabReport(id);
-      final current = state.valueOrNull ?? [];
+      final current = state.value ?? [];
       state = AsyncValue.data(current.where((r) => r.id != id).toList());
     } on DioException {
       rethrow;
@@ -159,9 +158,9 @@ Future<LabReport> labReportDetail(Ref ref, String reportId) async {
 
 @riverpod
 Future<List<LabPanel>> labPanels(Ref ref) async {
-  if (ref.watch(authProvider).valueOrNull == null) return [];
+  if (ref.watch(authProvider).value == null) return [];
   final dio = ref.watch(dioProvider);
-  final serverUrl = ref.watch(serverConfigProvider).valueOrNull ?? '';
+  final serverUrl = ref.watch(serverConfigProvider).value ?? '';
   final response = await dio.get<dynamic>('$serverUrl/test-results/panels');
   final data = response.data;
   if (data is! List) return [];

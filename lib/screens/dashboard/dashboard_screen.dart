@@ -36,7 +36,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final user = ref.watch(authProvider).valueOrNull;
+    final user = ref.watch(authProvider).value;
     final statsAsync = ref.watch(appointmentStatsProvider);
     final countAsync = ref.watch(patientCountProvider);
     final apptAsync = ref.watch(upcomingAppointmentsProvider);

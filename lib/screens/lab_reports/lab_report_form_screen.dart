@@ -221,7 +221,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
 
   Future<void> _showPanelPicker() async {
     final panelsAsync = ref.read(labPanelsProvider);
-    final panels = panelsAsync.valueOrNull;
+    final panels = panelsAsync.value;
     if (panels == null) {
       unawaited(
         ref.read(labPanelsProvider.future).then((_) {
