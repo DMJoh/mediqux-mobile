@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
 import 'package:mediqux_mobile/providers/session_provider.dart';
 import 'package:mediqux_mobile/providers/storage_provider.dart';
+import 'package:mediqux_mobile/services/auth_api.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final storage = ref.watch(storageServiceProvider);
@@ -30,6 +31,32 @@ final dioProvider = Provider<Dio>((ref) {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
+          final alreadyRefreshed =
+              error.requestOptions.extra['_refreshed'] == true;
+          if (!alreadyRefreshed) {
+            try {
+              final refreshDio = Dio(BaseOptions(baseUrl: serverUrl));
+              final oldToken = await storage.readToken();
+              if (oldToken != null) {
+                refreshDio.options.headers['Authorization'] =
+                    'Bearer $oldToken';
+              }
+              final api = AuthApi(refreshDio);
+              final response = await api.refresh();
+              if (response.success && response.data != null) {
+                await storage.saveToken(response.data!.token);
+                final retryOpts = error.requestOptions.copyWith(
+                  extra: {...error.requestOptions.extra, '_refreshed': true},
+                );
+                retryOpts.headers['Authorization'] =
+                    'Bearer ${response.data!.token}';
+                final retryResponse = await dio.fetch<dynamic>(retryOpts);
+                return handler.resolve(retryResponse);
+              }
+            } on Object {
+              // Refresh failed — fall through to logout.
+            }
+          }
           await storage.clearAuth();
           ref.read(sessionVersionProvider.notifier).state++;
         }
