@@ -124,9 +124,7 @@ abstract final class AppTheme {
       ),
       searchBarTheme: SearchBarThemeData(
         elevation: const WidgetStatePropertyAll(0),
-        backgroundColor: const WidgetStatePropertyAll(
-          Color(0xFFE8F5F7),
-        ),
+        backgroundColor: const WidgetStatePropertyAll(Color(0xFFE8F5F7)),
         shape: const WidgetStatePropertyAll(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(14)),
@@ -135,9 +133,7 @@ abstract final class AppTheme {
         padding: const WidgetStatePropertyAll(
           EdgeInsets.symmetric(horizontal: 16),
         ),
-        textStyle: WidgetStatePropertyAll(
-          GoogleFonts.inter(fontSize: 15),
-        ),
+        textStyle: WidgetStatePropertyAll(GoogleFonts.inter(fontSize: 15)),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: _seed,
@@ -251,9 +247,7 @@ abstract final class AppTheme {
         padding: const WidgetStatePropertyAll(
           EdgeInsets.symmetric(horizontal: 16),
         ),
-        textStyle: WidgetStatePropertyAll(
-          GoogleFonts.inter(fontSize: 15),
-        ),
+        textStyle: WidgetStatePropertyAll(GoogleFonts.inter(fontSize: 15)),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
