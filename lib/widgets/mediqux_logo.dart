@@ -16,12 +16,12 @@ class MediquxLogo extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF2196F3), Color(0xFF0A3D91)],
+          colors: [Color(0xFF0D8EA0), Color(0xFF003640)],
         ),
         borderRadius: BorderRadius.circular(radius),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1565C0).withValues(alpha: 0.45),
+            color: const Color(0xFF0B6E7C).withValues(alpha: 0.45),
             blurRadius: size * 0.28,
             offset: Offset(0, size * 0.1),
           ),

@@ -26,12 +26,15 @@ import 'package:mediqux_mobile/screens/lab_reports/lab_reports_list_screen.dart'
 import 'package:mediqux_mobile/screens/medications/medication_detail_screen.dart';
 import 'package:mediqux_mobile/screens/medications/medication_form_screen.dart';
 import 'package:mediqux_mobile/screens/medications/medications_list_screen.dart';
+import 'package:mediqux_mobile/screens/more/more_screen.dart';
 import 'package:mediqux_mobile/screens/patients/patient_detail_screen.dart';
 import 'package:mediqux_mobile/screens/patients/patient_form_screen.dart';
 import 'package:mediqux_mobile/screens/patients/patients_list_screen.dart';
 import 'package:mediqux_mobile/screens/prescriptions/prescription_detail_screen.dart';
 import 'package:mediqux_mobile/screens/prescriptions/prescription_form_screen.dart';
 import 'package:mediqux_mobile/screens/prescriptions/prescriptions_list_screen.dart';
+import 'package:mediqux_mobile/screens/records/records_screen.dart';
+import 'package:mediqux_mobile/widgets/app_shell.dart';
 
 GoRoute _crudRoute({
   required String path,
@@ -67,82 +70,94 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: notifier.redirect,
     routes: [
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-      GoRoute(path: '/', builder: (_, __) => const DashboardScreen()),
-      _crudRoute(
-        path: '/patients',
-        list: () => const PatientsListScreen(),
-        newForm: () => const PatientFormScreen(),
-        detail: (id) => PatientDetailScreen(patientId: id),
-        editForm: (id) => PatientFormScreen(patientId: id),
-      ),
-      _crudRoute(
-        path: '/doctors',
-        list: () => const DoctorsListScreen(),
-        newForm: () => const DoctorFormScreen(),
-        detail: (id) => DoctorDetailScreen(doctorId: id),
-        editForm: (id) => DoctorFormScreen(doctorId: id),
-      ),
-      _crudRoute(
-        path: '/institutions',
-        list: () => const InstitutionsListScreen(),
-        newForm: () => const InstitutionFormScreen(),
-        detail: (id) => InstitutionDetailScreen(institutionId: id),
-        editForm: (id) => InstitutionFormScreen(institutionId: id),
-      ),
-      _crudRoute(
-        path: '/appointments',
-        list: () => const AppointmentsListScreen(),
-        newForm: () => const AppointmentFormScreen(),
-        detail: (id) => AppointmentDetailScreen(appointmentId: id),
-        editForm: (id) => AppointmentFormScreen(appointmentId: id),
-      ),
-      _crudRoute(
-        path: '/conditions',
-        list: () => const ConditionsListScreen(),
-        newForm: () => const ConditionFormScreen(),
-        detail: (id) => ConditionDetailScreen(conditionId: id),
-        editForm: (id) => ConditionFormScreen(conditionId: id),
-      ),
-      _crudRoute(
-        path: '/medications',
-        list: () => const MedicationsListScreen(),
-        newForm: () => const MedicationFormScreen(),
-        detail: (id) => MedicationDetailScreen(medicationId: id),
-        editForm: (id) => MedicationFormScreen(medicationId: id),
-      ),
-      _crudRoute(
-        path: '/prescriptions',
-        list: () => const PrescriptionsListScreen(),
-        newForm: () => const PrescriptionFormScreen(),
-        detail: (id) => PrescriptionDetailScreen(prescriptionId: id),
-        editForm: (id) => PrescriptionFormScreen(prescriptionId: id),
-      ),
-      GoRoute(
-        path: '/lab-reports',
-        builder: (_, __) => const LabReportsListScreen(),
+      ShellRoute(
+        builder: (context, state, child) =>
+            AppShell(location: state.matchedLocation, child: child),
         routes: [
-          GoRoute(path: 'new', builder: (_, __) => const LabReportFormScreen()),
+          GoRoute(path: '/', builder: (_, __) => const DashboardScreen()),
+          _crudRoute(
+            path: '/patients',
+            list: () => const PatientsListScreen(),
+            newForm: () => const PatientFormScreen(),
+            detail: (id) => PatientDetailScreen(patientId: id),
+            editForm: (id) => PatientFormScreen(patientId: id),
+          ),
+          _crudRoute(
+            path: '/appointments',
+            list: () => const AppointmentsListScreen(),
+            newForm: () => const AppointmentFormScreen(),
+            detail: (id) => AppointmentDetailScreen(appointmentId: id),
+            editForm: (id) => AppointmentFormScreen(appointmentId: id),
+          ),
+          GoRoute(path: '/records', builder: (_, __) => const RecordsScreen()),
           GoRoute(
-            path: ':id',
-            builder: (_, state) => LabReportDetailScreen(
-              reportId: state.pathParameters['id'] ?? '',
-            ),
+            path: '/lab-reports',
+            builder: (_, __) => const LabReportsListScreen(),
             routes: [
               GoRoute(
-                path: 'edit',
-                builder: (_, state) =>
-                    LabReportFormScreen(reportId: state.pathParameters['id']),
+                path: 'new',
+                builder: (_, __) => const LabReportFormScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => LabReportDetailScreen(
+                  reportId: state.pathParameters['id'] ?? '',
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => LabReportFormScreen(
+                      reportId: state.pathParameters['id'],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+          _crudRoute(
+            path: '/diagnostic-studies',
+            list: () => const DiagnosticStudiesListScreen(),
+            newForm: () => const DiagnosticStudyFormScreen(),
+            detail: (id) => DiagnosticStudyDetailScreen(studyId: id),
+            editForm: (id) => DiagnosticStudyFormScreen(studyId: id),
+          ),
+          _crudRoute(
+            path: '/prescriptions',
+            list: () => const PrescriptionsListScreen(),
+            newForm: () => const PrescriptionFormScreen(),
+            detail: (id) => PrescriptionDetailScreen(prescriptionId: id),
+            editForm: (id) => PrescriptionFormScreen(prescriptionId: id),
+          ),
+          GoRoute(path: '/more', builder: (_, __) => const MoreScreen()),
+          _crudRoute(
+            path: '/doctors',
+            list: () => const DoctorsListScreen(),
+            newForm: () => const DoctorFormScreen(),
+            detail: (id) => DoctorDetailScreen(doctorId: id),
+            editForm: (id) => DoctorFormScreen(doctorId: id),
+          ),
+          _crudRoute(
+            path: '/institutions',
+            list: () => const InstitutionsListScreen(),
+            newForm: () => const InstitutionFormScreen(),
+            detail: (id) => InstitutionDetailScreen(institutionId: id),
+            editForm: (id) => InstitutionFormScreen(institutionId: id),
+          ),
+          _crudRoute(
+            path: '/conditions',
+            list: () => const ConditionsListScreen(),
+            newForm: () => const ConditionFormScreen(),
+            detail: (id) => ConditionDetailScreen(conditionId: id),
+            editForm: (id) => ConditionFormScreen(conditionId: id),
+          ),
+          _crudRoute(
+            path: '/medications',
+            list: () => const MedicationsListScreen(),
+            newForm: () => const MedicationFormScreen(),
+            detail: (id) => MedicationDetailScreen(medicationId: id),
+            editForm: (id) => MedicationFormScreen(medicationId: id),
+          ),
         ],
-      ),
-      _crudRoute(
-        path: '/diagnostic-studies',
-        list: () => const DiagnosticStudiesListScreen(),
-        newForm: () => const DiagnosticStudyFormScreen(),
-        detail: (id) => DiagnosticStudyDetailScreen(studyId: id),
-        editForm: (id) => DiagnosticStudyFormScreen(studyId: id),
       ),
     ],
   );
@@ -161,13 +176,19 @@ class _RouterNotifier extends ChangeNotifier {
   late AsyncValue<User?> _authState;
 
   String? redirect(BuildContext context, GoRouterState state) {
-    if (_authState.isLoading) return null;
+    if (_authState.isLoading) {
+      return null;
+    }
 
     final loc = state.matchedLocation;
     final isLoggedIn = _authState.value != null;
 
-    if (!isLoggedIn && loc != '/login') return '/login';
-    if (isLoggedIn && loc == '/login') return '/';
+    if (!isLoggedIn && loc != '/login') {
+      return '/login';
+    }
+    if (isLoggedIn && loc == '/login') {
+      return '/';
+    }
     return null;
   }
 }
