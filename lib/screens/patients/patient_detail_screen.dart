@@ -72,11 +72,18 @@ class PatientDetailScreen extends ConsumerWidget {
           ),
         ),
         data: (patient) {
+          final chips = [
+            if (patient.age != null) '${patient.age} yrs',
+            if (patient.gender != null && patient.gender!.isNotEmpty)
+              patient.gender!,
+          ];
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: DetailHero(
                   title: patient.fullName,
+                  avatarText: patient.initials,
+                  chips: chips,
                   onBack: () => context.pop(),
                   actions: [
                     IconButton(
@@ -118,7 +125,7 @@ class PatientDetailScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       _InfoSection(
-                        title: 'Personal Information',
+                        title: 'Personal',
                         rows: [
                           _InfoRow(
                             label: 'Date of Birth',
@@ -136,7 +143,7 @@ class PatientDetailScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       _InfoSection(
                         title: 'Contact',
                         rows: [
@@ -146,19 +153,22 @@ class PatientDetailScreen extends ConsumerWidget {
                       ),
                       if (patient.address != null &&
                           patient.address!.isNotEmpty) ...[
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         _InfoSection(
                           title: 'Address',
                           rows: [
-                            _InfoRow(label: 'Address', value: patient.address!),
+                            _InfoRow(
+                              label: 'Address',
+                              value: patient.address!,
+                            ),
                           ],
                         ),
                       ],
                       if (patient.emergencyContactName != null ||
                           patient.emergencyContactPhone != null) ...[
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         _InfoSection(
-                          title: 'Emergency Contact',
+                          title: 'Emergency',
                           rows: [
                             _InfoRow(
                               label: 'Name',
@@ -203,7 +213,7 @@ class _InfoSection extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
         borderRadius: const BorderRadius.all(Radius.circular(16)),
@@ -212,14 +222,23 @@ class _InfoSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
-            style: tt.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+            title.toUpperCase(),
+            style: tt.labelSmall?.copyWith(
               color: cs.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
             ),
           ),
-          const SizedBox(height: 12),
-          ...rows,
+          const SizedBox(height: 4),
+          for (int i = 0; i < rows.length; i++) ...[
+            rows[i],
+            if (i < rows.length - 1)
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                color: cs.outlineVariant.withValues(alpha: 0.5),
+              ),
+          ],
         ],
       ),
     );
@@ -237,12 +256,12 @@ class _InfoRow extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 120,
+            width: 110,
             child: Text(
               label,
               style: tt.bodySmall?.copyWith(
