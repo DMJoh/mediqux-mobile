@@ -7,9 +7,9 @@ import 'package:mediqux_mobile/providers/dio_provider.dart';
 import 'package:mediqux_mobile/providers/lab_report_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/detail_hero.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:mediqux_mobile/widgets/detail_hero.dart';
 
 class LabReportDetailScreen extends ConsumerWidget {
   const LabReportDetailScreen({required this.reportId, super.key});
