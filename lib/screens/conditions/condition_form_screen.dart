@@ -117,7 +117,12 @@ class _ConditionFormScreenState extends ConsumerState<ConditionFormScreen> {
             title: const Text('Edit Condition'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }

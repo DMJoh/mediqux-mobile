@@ -149,7 +149,12 @@ class _PatientFormScreenState extends ConsumerState<PatientFormScreen> {
             title: Text(isEdit ? 'Edit Patient' : 'Add Patient'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }

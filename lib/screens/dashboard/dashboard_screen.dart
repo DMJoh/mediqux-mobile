@@ -7,7 +7,6 @@ import 'package:mediqux_mobile/models/dashboard/upcoming_appointment.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
 import 'package:mediqux_mobile/providers/dashboard_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
-import 'package:mediqux_mobile/widgets/app_drawer.dart';
 import 'package:mediqux_mobile/widgets/mediqux_logo.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -43,7 +42,6 @@ class DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: cs.surface,
-      drawer: const AppDrawer(currentRoute: '/'),
       body: RefreshIndicator(
         onRefresh: () => _refresh(ref),
         color: cs.primary,
@@ -100,62 +98,46 @@ class _DashboardAppBar extends StatelessWidget {
 
     return SliverToBoxAdapter(
       child: Container(
-        decoration: const BoxDecoration(
-          gradient: AppTheme.headerGradient,
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.headerGradient),
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 12, 20, 28),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Builder(
-                      builder: (ctx) => IconButton(
-                        icon: const Icon(
-                          Icons.menu_rounded,
-                          color: Colors.white,
-                        ),
-                        onPressed: () => Scaffold.of(ctx).openDrawer(),
-                      ),
-                    ),
-                    const MediquxLogo(size: 36),
-                    const SizedBox(width: 10),
+                    const MediquxLogo(size: 28),
+                    const SizedBox(width: 8),
                     Text(
                       'Mediqux',
-                      style: tt.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                      style: tt.titleSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        firstName.isNotEmpty
-                            ? '$greeting, $firstName'
-                            : '$greeting!',
-                        style: tt.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        dateStr,
-                        style: tt.bodyMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.75),
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 24),
+                Text(
+                  dateStr,
+                  style: tt.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.55),
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  firstName.isNotEmpty
+                      ? '$greeting,\n$firstName'
+                      : '$greeting!',
+                  style: tt.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                    letterSpacing: -0.5,
                   ),
                 ),
               ],
@@ -267,9 +249,10 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             value,
-            style: tt.titleLarge?.copyWith(
+            style: tt.displaySmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: cs.onSurface,
+              letterSpacing: -1,
             ),
           ),
           const SizedBox(height: 2),
@@ -277,7 +260,8 @@ class _StatCard extends StatelessWidget {
             label,
             style: tt.labelSmall?.copyWith(
               color: cs.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
             ),
           ),
         ],
@@ -297,7 +281,12 @@ class _AppointmentsSliver extends StatelessWidget {
       loading: () => const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.all(48),
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         ),
       ),
       error: (e, _) => SliverToBoxAdapter(

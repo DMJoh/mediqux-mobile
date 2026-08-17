@@ -388,7 +388,12 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
               if (_loadingDropdowns)
                 const Padding(
                   padding: EdgeInsets.only(top: 48),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 3,
+                    ),
+                  ),
                 )
               else ...[
                 if (!_isEdit)

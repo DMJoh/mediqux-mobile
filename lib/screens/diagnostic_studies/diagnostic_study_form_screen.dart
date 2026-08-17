@@ -256,7 +256,12 @@ class _DiagnosticStudyFormScreenState
             title: const Text('Edit Study'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }
@@ -302,7 +307,12 @@ class _DiagnosticStudyFormScreenState
               if (_loadingDropdowns)
                 const Padding(
                   padding: EdgeInsets.only(top: 48),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 3,
+                    ),
+                  ),
                 )
               else ...[
                 // Patient dropdown

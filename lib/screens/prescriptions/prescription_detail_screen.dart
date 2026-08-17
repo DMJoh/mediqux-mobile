@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/prescription/prescription.dart';
 import 'package:mediqux_mobile/providers/prescription_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/detail_hero.dart';
 
 class PrescriptionDetailScreen extends ConsumerWidget {
   const PrescriptionDetailScreen({required this.prescriptionId, super.key});
@@ -67,7 +67,12 @@ class PrescriptionDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: cs.surface,
       body: rxAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeCap: StrokeCap.round,
+            strokeWidth: 3,
+          ),
+        ),
         error: (e, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -88,92 +93,48 @@ class PrescriptionDetailScreen extends ConsumerWidget {
           final dateFmt = DateFormat('MMM d, yyyy');
           return CustomScrollView(
             slivers: [
-              SliverAppBar(
-                expandedHeight: 180,
-                pinned: true,
-                leading: BackButton(
-                  color: Colors.white,
-                  onPressed: () => context.pop(),
-                ),
-                actions: [
-                  PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.more_vert_rounded,
-                      color: Colors.white,
-                    ),
-                    onSelected: (v) {
-                      if (v == 'edit') {
-                        context.push('/prescriptions/${rx.id}/edit');
-                      } else if (v == 'delete') {
-                        _confirmDelete(context, ref, rx);
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit_rounded, size: 20),
-                            SizedBox(width: 8),
-                            Text('Edit'),
-                          ],
+              SliverToBoxAdapter(
+                child: DetailHero(
+                  title: rx.medicationDisplay,
+                  onBack: () => context.pop(),
+                  actions: [
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert_rounded),
+                      onSelected: (v) {
+                        if (v == 'edit') {
+                          context.push('/prescriptions/${rx.id}/edit');
+                        } else if (v == 'delete') {
+                          _confirmDelete(context, ref, rx);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit_rounded, size: 20),
+                              SizedBox(width: 8),
+                              Text('Edit'),
+                            ],
+                          ),
                         ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_rounded,
-                              color: cs.error,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: cs.error)),
-                          ],
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_rounded,
+                                color: cs.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text('Delete', style: TextStyle(color: cs.error)),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  titlePadding: const EdgeInsets.only(
-                    left: 56,
-                    right: 56,
-                    bottom: 16,
-                  ),
-                  title: Text(
-                    rx.medicationDisplay,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: AppTheme.headerGradient,
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.medication_rounded,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
               ),
               SliverToBoxAdapter(

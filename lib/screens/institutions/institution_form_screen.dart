@@ -116,7 +116,12 @@ class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
             title: const Text('Edit Institution'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }
