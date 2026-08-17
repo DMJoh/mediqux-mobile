@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/condition/condition.dart';
 import 'package:mediqux_mobile/providers/condition_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/detail_hero.dart';
 
 Color _severityColor(String? severity) {
   switch (severity?.toLowerCase()) {
@@ -74,7 +74,12 @@ class ConditionDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: cs.surface,
       body: conditionAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeCap: StrokeCap.round,
+            strokeWidth: 3,
+          ),
+        ),
         error: (e, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -94,88 +99,42 @@ class ConditionDetailScreen extends ConsumerWidget {
           final severityColor = _severityColor(condition.severity);
           return CustomScrollView(
             slivers: [
-              SliverAppBar(
-                expandedHeight: 180,
-                pinned: true,
-                leading: BackButton(
-                  color: Colors.white,
-                  onPressed: () => context.pop(),
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_rounded, color: Colors.white),
-                    tooltip: 'Edit',
-                    onPressed: () =>
-                        context.push('/conditions/${condition.id}/edit'),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.more_vert_rounded,
-                      color: Colors.white,
+              SliverToBoxAdapter(
+                child: DetailHero(
+                  title: condition.name,
+                  onBack: () => context.pop(),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_rounded),
+                      tooltip: 'Edit',
+                      onPressed: () =>
+                          context.push('/conditions/${condition.id}/edit'),
                     ),
-                    onSelected: (v) {
-                      if (v == 'delete') {
-                        _confirmDelete(context, ref, condition);
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_rounded,
-                              color: cs.error,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: cs.error)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  titlePadding: const EdgeInsets.only(
-                    left: 56,
-                    right: 56,
-                    bottom: 16,
-                  ),
-                  title: Text(
-                    condition.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: AppTheme.headerGradient,
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(20),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert_rounded),
+                      onSelected: (v) {
+                        if (v == 'delete') {
+                          _confirmDelete(context, ref, condition);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_rounded,
+                                color: cs.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text('Delete', style: TextStyle(color: cs.error)),
+                            ],
                           ),
                         ),
-                        child: const Icon(
-                          Icons.healing_rounded,
-                          color: Colors.white,
-                          size: 36,
-                        ),
-                      ),
+                      ],
                     ),
-                  ),
+                  ],
                 ),
               ),
               SliverToBoxAdapter(

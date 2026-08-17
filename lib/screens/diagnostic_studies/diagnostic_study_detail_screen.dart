@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/diagnostic_study/diagnostic_study.dart';
 import 'package:mediqux_mobile/providers/diagnostic_study_provider.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
@@ -10,6 +9,7 @@ import 'package:mediqux_mobile/providers/server_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:mediqux_mobile/widgets/detail_hero.dart';
 
 class DiagnosticStudyDetailScreen extends ConsumerWidget {
   const DiagnosticStudyDetailScreen({required this.studyId, super.key});
@@ -83,7 +83,12 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: cs.surface,
       body: studyAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeCap: StrokeCap.round,
+            strokeWidth: 3,
+          ),
+        ),
         error: (e, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -103,86 +108,42 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
           final dateFmt = DateFormat('MMM d, yyyy');
           return CustomScrollView(
             slivers: [
-              SliverAppBar(
-                expandedHeight: 180,
-                pinned: true,
-                leading: BackButton(
-                  color: Colors.white,
-                  onPressed: () => context.pop(),
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_rounded, color: Colors.white),
-                    tooltip: 'Edit',
-                    onPressed: () =>
-                        context.push('/diagnostic-studies/${study.id}/edit'),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.more_vert_rounded,
-                      color: Colors.white,
+              SliverToBoxAdapter(
+                child: DetailHero(
+                  title: study.studyType,
+                  onBack: () => context.pop(),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_rounded),
+                      tooltip: 'Edit',
+                      onPressed: () =>
+                          context.push('/diagnostic-studies/${study.id}/edit'),
                     ),
-                    onSelected: (v) {
-                      if (v == 'delete') {
-                        _confirmDelete(context, ref, study);
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_rounded,
-                              color: cs.error,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: cs.error)),
-                          ],
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert_rounded),
+                      onSelected: (v) {
+                        if (v == 'delete') {
+                          _confirmDelete(context, ref, study);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_rounded,
+                                color: cs.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text('Delete', style: TextStyle(color: cs.error)),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  titlePadding: const EdgeInsets.only(
-                    left: 56,
-                    right: 56,
-                    bottom: 16,
-                  ),
-                  title: Text(
-                    study.studyType,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: AppTheme.headerGradient,
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.document_scanner_rounded,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
               ),
               SliverToBoxAdapter(

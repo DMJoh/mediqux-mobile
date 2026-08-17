@@ -157,7 +157,12 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
             title: const Text('Edit Medication'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }

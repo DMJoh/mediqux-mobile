@@ -109,7 +109,12 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
             title: const Text('Edit Doctor'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }
@@ -222,7 +227,10 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
                 loading: () => const Center(
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 3,
+                    ),
                   ),
                 ),
                 error: (e, _) => Text(

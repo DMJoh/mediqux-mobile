@@ -164,7 +164,12 @@ class _PrescriptionFormScreenState
             title: const Text('Edit Prescription'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }
@@ -210,7 +215,12 @@ class _PrescriptionFormScreenState
               if (_loadingDropdowns)
                 const Padding(
                   padding: EdgeInsets.only(top: 48),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 3,
+                    ),
+                  ),
                 )
               else ...[
                 // Appointment dropdown
