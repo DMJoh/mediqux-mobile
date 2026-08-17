@@ -33,6 +33,9 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage
 
+      - name: Run flutter analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos 2>&1 | tee flutter-analyze.txt || true
+
       - name: Get version
         run: |
           DATE=$(date +'%Y.%m.%d')
@@ -47,4 +50,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_SCANNER_OPTS: "-Dsonar.projectVersion=${{ env.VERSION }}"
+          SONAR_SCANNER_OPTS: >-
+            -Dsonar.projectVersion=${{ env.VERSION }}
+            -Dsonar.flutter.analyzer.reportPath=flutter-analyze.txt
