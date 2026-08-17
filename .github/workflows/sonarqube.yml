@@ -33,6 +33,13 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage
 
+      - name: Cache SonarQube scanner plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: sonar-${{ runner.os }}-plugins
+          restore-keys: sonar-${{ runner.os }}-plugins
+
       - name: Get version
         id: version
         run: |
