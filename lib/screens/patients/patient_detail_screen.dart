@@ -157,10 +157,7 @@ class PatientDetailScreen extends ConsumerWidget {
                         _InfoSection(
                           title: 'Address',
                           rows: [
-                            _InfoRow(
-                              label: 'Address',
-                              value: patient.address!,
-                            ),
+                            _InfoRow(label: 'Address', value: patient.address!),
                           ],
                         ),
                       ],
