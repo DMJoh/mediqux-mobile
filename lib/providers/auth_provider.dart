@@ -48,9 +48,13 @@ bool _isJwtExpiringSoon(String token) {
 
 @Riverpod(keepAlive: true)
 class Auth extends _$Auth {
+  Timer? _refreshTimer;
+
   @override
   Future<User?> build() async {
-    ref.watch(sessionVersionProvider);
+    ref
+      ..onDispose(() => _refreshTimer?.cancel())
+      ..watch(sessionVersionProvider);
     final storage = ref.watch(storageServiceProvider);
     final token = await storage.readToken();
     if (token == null) return null;
@@ -60,8 +64,25 @@ class Auth extends _$Auth {
     }
     if (_isJwtExpiringSoon(token)) {
       unawaited(_silentRefresh(storage));
+    } else {
+      _scheduleProactiveRefresh(token, storage);
     }
     return storage.readUser();
+  }
+
+  void _scheduleProactiveRefresh(String token, StorageService storage) {
+    _refreshTimer?.cancel();
+    final exp = _jwtPayload(token)?['exp'];
+    if (exp == null) return;
+    final expiryMs = (exp as num).toInt() * 1000;
+    final delayMs =
+        expiryMs -
+        const Duration(minutes: 5).inMilliseconds -
+        DateTime.now().millisecondsSinceEpoch;
+    if (delayMs <= 0) return;
+    _refreshTimer = Timer(Duration(milliseconds: delayMs), () {
+      unawaited(_silentRefresh(storage));
+    });
   }
 
   Future<void> _silentRefresh(StorageService storage) async {

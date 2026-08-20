@@ -20,11 +20,36 @@ Future<void> main() async {
   );
 }
 
-class MediquxApp extends ConsumerWidget {
+class MediquxApp extends ConsumerStatefulWidget {
   const MediquxApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MediquxApp> createState() => _MediquxAppState();
+}
+
+class _MediquxAppState extends ConsumerState<MediquxApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(authProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'Mediqux',
