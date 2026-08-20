@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/doctor/doctor.dart';
 import 'package:mediqux_mobile/providers/doctor_provider.dart';
-import 'package:mediqux_mobile/widgets/app_drawer.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 class DoctorsListScreen extends ConsumerStatefulWidget {
   const DoctorsListScreen({super.key});
@@ -13,7 +13,6 @@ class DoctorsListScreen extends ConsumerStatefulWidget {
 }
 
 class _DoctorsListScreenState extends ConsumerState<DoctorsListScreen> {
-  bool _isSearching = false;
   final _searchCtrl = TextEditingController();
 
   @override
@@ -37,106 +36,84 @@ class _DoctorsListScreenState extends ConsumerState<DoctorsListScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final doctorsAsync = ref.watch(doctorsProvider);
 
     return Scaffold(
       backgroundColor: cs.surface,
-      drawer: const AppDrawer(currentRoute: '/doctors'),
-      appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
-        leading: _isSearching
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => setState(() {
-                  _isSearching = false;
-                  _searchCtrl.clear();
-                }),
-              )
-            : Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.menu_rounded),
-                  onPressed: () => Scaffold.of(ctx).openDrawer(),
-                ),
-              ),
-        centerTitle: true,
-        title: _isSearching
-            ? TextField(
-                controller: _searchCtrl,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Search doctors...',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                onChanged: (_) => setState(() {}),
-              )
-            : Text(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Text(
                 'Doctors',
-                style: TextStyle(
+                style: tt.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
                   color: cs.onSurface,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-        actions: [
-          if (_isSearching)
-            IconButton(
-              icon: const Icon(Icons.clear_rounded),
-              onPressed: () {
-                if (_searchCtrl.text.isEmpty) {
-                  setState(() => _isSearching = false);
-                } else {
-                  setState(_searchCtrl.clear);
-                }
-              },
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.search_rounded),
-              onPressed: () => setState(() => _isSearching = true),
-            ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(doctorsProvider.notifier).refresh(),
-        color: cs.primary,
-        child: doctorsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: _ErrorState(
-                  message: e.toString(),
-                  onRetry: () => ref.read(doctorsProvider.notifier).refresh(),
                 ),
               ),
             ),
-          ),
-          data: (list) {
-            final filtered = _applySearch(list);
-            if (filtered.isEmpty) {
-              return LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: SearchBar(
+                controller: _searchCtrl,
+                hintText: 'Search doctors…',
+                leading: const Icon(Icons.search_rounded),
+                trailing: [
+                  ValueListenableBuilder(
+                    valueListenable: _searchCtrl,
+                    builder: (_, val, __) => val.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: doctorsAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(
+                    strokeCap: StrokeCap.round,
+                    strokeWidth: 3,
                   ),
                 ),
-              );
-            }
-            return ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-              itemCount: filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) => _DoctorCard(doctor: filtered[i]),
-            );
-          },
+                error: (e, _) => _ErrorState(
+                  message: friendlyError(e),
+                  onRetry: () => ref.read(doctorsProvider.notifier).refresh(),
+                ),
+                data: (list) {
+                  final filtered = _applySearch(list);
+                  if (filtered.isEmpty) {
+                    return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () =>
+                        ref.read(doctorsProvider.notifier).refresh(),
+                    color: cs.primary,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) => _DoctorCard(doctor: filtered[i]),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(

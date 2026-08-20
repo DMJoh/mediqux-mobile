@@ -11,6 +11,7 @@ import 'package:mediqux_mobile/providers/appointment_provider.dart';
 import 'package:mediqux_mobile/providers/doctor_provider.dart';
 import 'package:mediqux_mobile/providers/institution_provider.dart';
 import 'package:mediqux_mobile/providers/patient_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 const _kTypes = [
   'Consultation',
@@ -62,19 +63,36 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final patients = ref.read(patientsProvider).valueOrNull ?? [];
-      final doctors = ref.read(doctorsProvider).valueOrNull ?? [];
-      final institutions = ref.read(institutionsProvider).valueOrNull ?? [];
-      if (mounted) {
-        setState(() {
-          _patients = patients;
-          _doctors = doctors;
-          _institutions = institutions;
-          _loadingDropdowns = false;
-        });
-      }
-    });
+    final pA = ref.read(patientsProvider);
+    final dA = ref.read(doctorsProvider);
+    final iA = ref.read(institutionsProvider);
+    if (pA.hasValue &&
+        !pA.isLoading &&
+        dA.hasValue &&
+        !dA.isLoading &&
+        iA.hasValue &&
+        !iA.isLoading) {
+      _patients = pA.requireValue;
+      _doctors = dA.requireValue;
+      _institutions = iA.requireValue;
+      _loadingDropdowns = false;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final results = await Future.wait([
+          ref.read(patientsProvider.future),
+          ref.read(doctorsProvider.future),
+          ref.read(institutionsProvider.future),
+        ]);
+        if (mounted) {
+          setState(() {
+            _patients = results[0] as List<Patient>;
+            _doctors = results[1] as List<Doctor>;
+            _institutions = results[2] as List<Institution>;
+            _loadingDropdowns = false;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -168,7 +186,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -195,7 +213,12 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
             title: const Text('Edit Appointment'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }
@@ -239,7 +262,15 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_loadingDropdowns)
-                const Center(child: CircularProgressIndicator())
+                const Padding(
+                  padding: EdgeInsets.only(top: 48),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                )
               else ...[
                 // Patient dropdown
                 // ignore: deprecated_member_use
@@ -353,20 +384,20 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
                   ],
                   onChanged: (v) => setState(() => _selectedInstitutionId = v),
                 ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notesCtrl,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _diagnosisCtrl,
+                  decoration: const InputDecoration(labelText: 'Diagnosis'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 32),
               ],
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notesCtrl,
-                decoration: const InputDecoration(labelText: 'Notes'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _diagnosisCtrl,
-                decoration: const InputDecoration(labelText: 'Diagnosis'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 32),
             ],
           ),
         ),

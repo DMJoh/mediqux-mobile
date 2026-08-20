@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/medication/medication.dart';
 import 'package:mediqux_mobile/models/medication/medication_request.dart';
 import 'package:mediqux_mobile/providers/medication_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 const _kDosageForms = [
   'Tablet',
@@ -130,7 +131,7 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -156,7 +157,12 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
             title: const Text('Edit Medication'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }

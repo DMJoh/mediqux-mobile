@@ -75,7 +75,7 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
 
     await ref.read(serverConfigProvider.notifier).setUrl(url);
     if (!mounted) return;
-    final isLoggedIn = ref.read(authProvider).valueOrNull != null;
+    final isLoggedIn = ref.read(authProvider).value != null;
     if (isLoggedIn) {
       context.go('/');
     }
@@ -86,11 +86,11 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final isLoggedIn = ref.watch(authProvider).valueOrNull != null;
+    final isLoggedIn = ref.watch(authProvider).value != null;
 
     // Pre-fill with the existing URL when opened from settings.
     if (!_initialized) {
-      final existing = ref.read(serverConfigProvider).valueOrNull;
+      final existing = ref.read(serverConfigProvider).value;
       if (existing != null) {
         _urlController.text = existing.replaceFirst(RegExp(r'/api$'), '');
       }

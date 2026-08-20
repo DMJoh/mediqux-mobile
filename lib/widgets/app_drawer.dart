@@ -5,6 +5,7 @@ import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/user.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
 import 'package:mediqux_mobile/widgets/mediqux_logo.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({required this.currentRoute, super.key});
@@ -15,7 +16,7 @@ class AppDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final user = ref.watch(authProvider).valueOrNull;
+    final user = ref.watch(authProvider).value;
 
     return Drawer(
       child: SafeArea(
@@ -98,9 +99,16 @@ class AppDrawer extends ConsumerWidget {
                 'Change Server',
                 style: tt.bodyMedium?.copyWith(color: cs.onSurface),
               ),
-              onTap: () {
+              subtitle: Text(
+                'Sign out and update server address',
+                style: tt.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                ),
+              ),
+              onTap: () async {
                 Navigator.of(context).pop();
-                context.push('/setup');
+                await ref.read(authProvider.notifier).logout();
+                // Router redirects to /login; server URL stays pre-filled
               },
             ),
             ListTile(
@@ -113,10 +121,8 @@ class AppDrawer extends ConsumerWidget {
                 ),
               ),
               onTap: () async {
+                Navigator.of(context).pop();
                 await ref.read(authProvider.notifier).logout();
-                if (context.mounted) {
-                  context.go('/login');
-                }
               },
             ),
             const SizedBox(height: 8),
@@ -127,10 +133,25 @@ class AppDrawer extends ConsumerWidget {
   }
 }
 
-class _DrawerHeader extends StatelessWidget {
+class _DrawerHeader extends StatefulWidget {
   const _DrawerHeader({required this.user});
 
   final User? user;
+
+  @override
+  State<_DrawerHeader> createState() => _DrawerHeaderState();
+}
+
+class _DrawerHeaderState extends State<_DrawerHeader> {
+  String? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _version = 'v${info.version}');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +172,7 @@ class _DrawerHeader extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          if (user case final u?) ...[
+          if (widget.user case final u?) ...[
             const SizedBox(height: 4),
             Text(
               '${u.firstName} ${u.lastName}',
@@ -165,6 +186,16 @@ class _DrawerHeader extends StatelessWidget {
               u.role,
               style: tt.labelSmall?.copyWith(
                 color: Colors.white.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+          if (_version != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              _version!,
+              style: tt.labelSmall?.copyWith(
+                color: Colors.white.withValues(alpha: 0.45),
+                fontSize: 10,
               ),
             ),
           ],

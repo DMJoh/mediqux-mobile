@@ -71,3 +71,6 @@ android/key.properties
 # Android generated files
 android/.kotlin/
 android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# Machine-specific build workaround (TLS issue on this dev machine)
+build_android.sh

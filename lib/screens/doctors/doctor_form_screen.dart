@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/doctor/doctor.dart';
 import 'package:mediqux_mobile/models/doctor/doctor_request.dart';
 import 'package:mediqux_mobile/providers/doctor_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 class DoctorFormScreen extends ConsumerStatefulWidget {
   const DoctorFormScreen({super.key, this.doctorId});
@@ -82,7 +83,7 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -108,7 +109,12 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
             title: const Text('Edit Doctor'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }
@@ -221,7 +227,10 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
                 loading: () => const Center(
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),
+                    child: CircularProgressIndicator(
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 3,
+                    ),
                   ),
                 ),
                 error: (e, _) => Text(

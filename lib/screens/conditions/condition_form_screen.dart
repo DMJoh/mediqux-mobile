@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/condition/condition.dart';
 import 'package:mediqux_mobile/models/condition/condition_request.dart';
 import 'package:mediqux_mobile/providers/condition_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 const _kCategories = [
   'Cardiovascular',
@@ -91,7 +92,7 @@ class _ConditionFormScreenState extends ConsumerState<ConditionFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -116,7 +117,12 @@ class _ConditionFormScreenState extends ConsumerState<ConditionFormScreen> {
             title: const Text('Edit Condition'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }

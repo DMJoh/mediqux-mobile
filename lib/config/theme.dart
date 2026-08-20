@@ -3,49 +3,85 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 abstract final class AppTheme {
-  static const Color _seed = Color(0xFF1565C0);
+  static const Color _seed = Color(0xFF0B6E7C);
 
   static const LinearGradient brandGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF2196F3), Color(0xFF0A3D91)],
+    colors: [Color(0xFF0D8EA0), Color(0xFF003640)],
   );
 
   static const LinearGradient headerGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+    colors: [Color(0xFF001F24), Color(0xFF003640)],
   );
 
   static ThemeData get light {
-    final cs = ColorScheme.fromSeed(seedColor: _seed);
+    final cs = ColorScheme.fromSeed(
+      seedColor: _seed,
+      dynamicSchemeVariant: DynamicSchemeVariant.expressive,
+    );
     final base = ThemeData(useMaterial3: true, colorScheme: cs);
     return base.copyWith(
-      scaffoldBackgroundColor: const Color(0xFFF4F7FF),
+      scaffoldBackgroundColor: const Color(0xFFF0F9FA),
       textTheme: GoogleFonts.interTextTheme(base.textTheme),
       appBarTheme: AppBarTheme(
         systemOverlayStyle: SystemUiOverlayStyle.dark,
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFF0F9FA),
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         foregroundColor: cs.onSurface,
         iconTheme: IconThemeData(color: cs.onSurface),
         titleTextStyle: GoogleFonts.inter(
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: FontWeight.w700,
           color: cs.onSurface,
+          letterSpacing: -0.3,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: const CardThemeData(
         elevation: 0,
         color: Colors.white,
-        shadowColor: _seed.withValues(alpha: 0.1),
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        indicatorColor: cs.primaryContainer,
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: cs.onPrimaryContainer, size: 22);
+          }
+          return IconThemeData(
+            color: cs.onSurfaceVariant.withValues(alpha: 0.75),
+            size: 22,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: cs.primary,
+            );
+          }
+          return GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: cs.onSurfaceVariant.withValues(alpha: 0.75),
+          );
+        }),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFF0F4FF),
+        fillColor: const Color(0xFFE8F5F7),
         border: OutlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(14)),
           borderSide: BorderSide(color: _seed.withValues(alpha: 0.15)),
@@ -86,6 +122,27 @@ abstract final class AppTheme {
           elevation: 0,
         ),
       ),
+      searchBarTheme: SearchBarThemeData(
+        elevation: const WidgetStatePropertyAll(0),
+        backgroundColor: const WidgetStatePropertyAll(Color(0xFFE8F5F7)),
+        shape: const WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(14)),
+          ),
+        ),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 16),
+        ),
+        textStyle: WidgetStatePropertyAll(GoogleFonts.inter(fontSize: 15)),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: _seed,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+      ),
     );
   }
 
@@ -93,28 +150,63 @@ abstract final class AppTheme {
     final cs = ColorScheme.fromSeed(
       seedColor: _seed,
       brightness: Brightness.dark,
+      dynamicSchemeVariant: DynamicSchemeVariant.expressive,
     );
     final base = ThemeData(useMaterial3: true, colorScheme: cs);
     return base.copyWith(
-      scaffoldBackgroundColor: cs.surface,
+      scaffoldBackgroundColor: const Color(0xFF0A1315),
       textTheme: GoogleFonts.interTextTheme(base.textTheme),
       appBarTheme: AppBarTheme(
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF0A1315),
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         foregroundColor: Colors.white,
         titleTextStyle: GoogleFonts.inter(
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: FontWeight.w700,
           color: Colors.white,
+          letterSpacing: -0.3,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: const CardThemeData(
         elevation: 0,
-        color: cs.surfaceContainerLow,
-        shape: const RoundedRectangleBorder(
+        color: Color(0xFF141E21),
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        elevation: 0,
+        backgroundColor: const Color(0xFF141E21),
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        indicatorColor: cs.primaryContainer,
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(color: cs.onPrimaryContainer, size: 22);
+          }
+          return IconThemeData(
+            color: cs.onSurfaceVariant.withValues(alpha: 0.75),
+            size: 22,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: cs.primary,
+            );
+          }
+          return GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: cs.onSurfaceVariant.withValues(alpha: 0.75),
+          );
+        }),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -144,6 +236,19 @@ abstract final class AppTheme {
           vertical: 16,
         ),
       ),
+      searchBarTheme: SearchBarThemeData(
+        elevation: const WidgetStatePropertyAll(0),
+        backgroundColor: WidgetStatePropertyAll(cs.surfaceContainerHigh),
+        shape: const WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(14)),
+          ),
+        ),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 16),
+        ),
+        textStyle: WidgetStatePropertyAll(GoogleFonts.inter(fontSize: 15)),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           textStyle: GoogleFonts.inter(
@@ -155,6 +260,12 @@ abstract final class AppTheme {
             borderRadius: BorderRadius.all(Radius.circular(14)),
           ),
           elevation: 0,
+        ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),
     );

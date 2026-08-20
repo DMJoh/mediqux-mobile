@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/institution/institution.dart';
 import 'package:mediqux_mobile/models/institution/institution_request.dart';
 import 'package:mediqux_mobile/providers/institution_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 const _kTypes = [
   'Hospital',
@@ -88,7 +89,7 @@ class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -115,7 +116,12 @@ class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
             title: const Text('Edit Institution'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }

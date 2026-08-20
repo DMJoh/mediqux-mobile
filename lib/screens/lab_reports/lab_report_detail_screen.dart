@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/lab_report/lab_report.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
 import 'package:mediqux_mobile/providers/lab_report_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/detail_hero.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -52,7 +53,7 @@ class LabReportDetailScreen extends ConsumerWidget {
   ) async {
     try {
       final dio = ref.read(dioProvider);
-      final serverUrl = ref.read(serverConfigProvider).valueOrNull ?? '';
+      final serverUrl = ref.read(serverConfigProvider).value ?? '';
       final tmpDir = await getTemporaryDirectory();
       final tmpPath = '${tmpDir.path}/mediqux_report_$reportId.pdf';
       await dio.download('$serverUrl/test-results/$reportId/view', tmpPath);
@@ -79,14 +80,19 @@ class LabReportDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: cs.surface,
       body: reportAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeCap: StrokeCap.round,
+            strokeWidth: 3,
+          ),
+        ),
         error: (e, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
               const SizedBox(height: 16),
-              Text(e.toString()),
+              Text(friendlyError(e)),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => context.pop(),
@@ -99,58 +105,23 @@ class LabReportDetailScreen extends ConsumerWidget {
           final dateFmt = DateFormat('MMM d, yyyy');
           return CustomScrollView(
             slivers: [
-              SliverAppBar(
-                expandedHeight: 180,
-                pinned: true,
-                leading: BackButton(
-                  color: Colors.white,
-                  onPressed: () => context.pop(),
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.delete_rounded, color: Colors.white),
-                    tooltip: 'Delete',
-                    onPressed: () => _confirmDelete(context, ref, report),
-                  ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  titlePadding: const EdgeInsets.only(
-                    left: 56,
-                    right: 56,
-                    bottom: 16,
-                  ),
-                  title: Text(
-                    report.testName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
+              SliverToBoxAdapter(
+                child: DetailHero(
+                  title: report.testName,
+                  onBack: () => context.pop(),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_rounded),
+                      tooltip: 'Edit',
+                      onPressed: () =>
+                          context.push('/lab-reports/${report.id}/edit'),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: AppTheme.headerGradient,
+                    IconButton(
+                      icon: const Icon(Icons.delete_rounded),
+                      tooltip: 'Delete',
+                      onPressed: () => _confirmDelete(context, ref, report),
                     ),
-                    child: Center(
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.science_rounded,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
               ),
               SliverToBoxAdapter(

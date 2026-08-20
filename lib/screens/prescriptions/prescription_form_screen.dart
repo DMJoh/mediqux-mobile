@@ -9,6 +9,7 @@ import 'package:mediqux_mobile/models/prescription/prescription_request.dart';
 import 'package:mediqux_mobile/providers/appointment_provider.dart';
 import 'package:mediqux_mobile/providers/medication_provider.dart';
 import 'package:mediqux_mobile/providers/prescription_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
 
 const _kFrequencies = [
   'Once daily',
@@ -59,17 +60,27 @@ class _PrescriptionFormScreenState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final apts = ref.read(appointmentsProvider).valueOrNull ?? [];
-      final meds = ref.read(medicationsProvider).valueOrNull ?? [];
-      if (mounted) {
-        setState(() {
-          _appointments = apts;
-          _medications = meds;
-          _loadingDropdowns = false;
-        });
-      }
-    });
+    final aA = ref.read(appointmentsProvider);
+    final mA = ref.read(medicationsProvider);
+    if (aA.hasValue && !aA.isLoading && mA.hasValue && !mA.isLoading) {
+      _appointments = aA.requireValue;
+      _medications = mA.requireValue;
+      _loadingDropdowns = false;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final results = await Future.wait([
+          ref.read(appointmentsProvider.future),
+          ref.read(medicationsProvider.future),
+        ]);
+        if (mounted) {
+          setState(() {
+            _appointments = results[0] as List<Appointment>;
+            _medications = results[1] as List<Medication>;
+            _loadingDropdowns = false;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -121,7 +132,7 @@ class _PrescriptionFormScreenState
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -153,7 +164,12 @@ class _PrescriptionFormScreenState
             title: const Text('Edit Prescription'),
             backgroundColor: cs.surface,
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
+          ),
         );
       }
     }
@@ -197,7 +213,15 @@ class _PrescriptionFormScreenState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_loadingDropdowns)
-                const Center(child: CircularProgressIndicator())
+                const Padding(
+                  padding: EdgeInsets.only(top: 48),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                )
               else ...[
                 // Appointment dropdown
                 // ignore: deprecated_member_use
@@ -242,65 +266,65 @@ class _PrescriptionFormScreenState
                   onChanged: (v) => setState(() => _selectedMedicationId = v),
                   validator: (v) => v == null ? 'Medication is required' : null,
                 ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _dosageCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Dosage *',
+                    hintText: 'e.g. 500mg',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Dosage is required'
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                // Frequency dropdown
+                // ignore: deprecated_member_use
+                DropdownButtonFormField<String>(
+                  // Deprecated in favour of DropdownMenu.
+                  // ignore: deprecated_member_use
+                  value: _selectedFrequency,
+                  decoration: const InputDecoration(labelText: 'Frequency *'),
+                  items: _kFrequencies
+                      .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedFrequency = v),
+                  validator: (v) => v == null ? 'Frequency is required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _durationCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Duration *',
+                    hintText: 'e.g. 7 days',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Duration is required'
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _instructionsCtrl,
+                  decoration: const InputDecoration(labelText: 'Instructions'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 12),
+                // Status dropdown
+                // ignore: deprecated_member_use
+                DropdownButtonFormField<String>(
+                  // Deprecated in favour of DropdownMenu.
+                  // ignore: deprecated_member_use
+                  value: _selectedStatus,
+                  decoration: const InputDecoration(labelText: 'Status'),
+                  items: _kStatuses
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setState(() => _selectedStatus = v);
+                  },
+                ),
+                const SizedBox(height: 32),
               ],
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _dosageCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Dosage *',
-                  hintText: 'e.g. 500mg',
-                ),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Dosage is required'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              // Frequency dropdown
-              // ignore: deprecated_member_use
-              DropdownButtonFormField<String>(
-                // Deprecated in favour of DropdownMenu.
-                // ignore: deprecated_member_use
-                value: _selectedFrequency,
-                decoration: const InputDecoration(labelText: 'Frequency *'),
-                items: _kFrequencies
-                    .map((f) => DropdownMenuItem(value: f, child: Text(f)))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedFrequency = v),
-                validator: (v) => v == null ? 'Frequency is required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _durationCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Duration *',
-                  hintText: 'e.g. 7 days',
-                ),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Duration is required'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _instructionsCtrl,
-                decoration: const InputDecoration(labelText: 'Instructions'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              // Status dropdown
-              // ignore: deprecated_member_use
-              DropdownButtonFormField<String>(
-                // Deprecated in favour of DropdownMenu.
-                // ignore: deprecated_member_use
-                value: _selectedStatus,
-                decoration: const InputDecoration(labelText: 'Status'),
-                items: _kStatuses
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) setState(() => _selectedStatus = v);
-                },
-              ),
-              const SizedBox(height: 32),
             ],
           ),
         ),
