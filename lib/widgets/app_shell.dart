@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mediqux_mobile/widgets/floating_nav_bar.dart';
 
 class AppShell extends ConsumerWidget {
   const AppShell({required this.child, required this.location, super.key});
@@ -8,25 +9,30 @@ class AppShell extends ConsumerWidget {
   final Widget child;
   final String location;
 
+  static const _items = [
+    NavBarItem(icon: Icons.home_outlined, label: 'Home'),
+    NavBarItem(icon: Icons.people_outline_rounded, label: 'Patients'),
+    NavBarItem(icon: Icons.science_outlined, label: 'Records'),
+    NavBarItem(icon: Icons.grid_view_outlined, label: 'More'),
+  ];
+
   int _selectedIndex() {
     if (location.startsWith('/patients')) {
       return 1;
-    }
-    if (location.startsWith('/appointments')) {
-      return 2;
     }
     if (location.startsWith('/records') ||
         location.startsWith('/lab-reports') ||
         location.startsWith('/diagnostic-studies') ||
         location.startsWith('/prescriptions')) {
-      return 3;
+      return 2;
     }
     if (location.startsWith('/more') ||
+        location.startsWith('/appointments') ||
         location.startsWith('/doctors') ||
         location.startsWith('/institutions') ||
         location.startsWith('/conditions') ||
         location.startsWith('/medications')) {
-      return 4;
+      return 3;
     }
     return 0;
   }
@@ -46,49 +52,21 @@ class AppShell extends ConsumerWidget {
       },
       child: Scaffold(
         body: child,
-        bottomNavigationBar: NavigationBar(
+        bottomNavigationBar: FloatingNavBar(
+          items: _items,
           selectedIndex: idx,
-          onDestinationSelected: (i) {
+          onSelected: (i) {
             switch (i) {
               case 0:
                 context.go('/');
               case 1:
                 context.go('/patients');
               case 2:
-                context.go('/appointments');
-              case 3:
                 context.go('/records');
-              case 4:
+              case 3:
                 context.go('/more');
             }
           },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.people_outline_rounded),
-              selectedIcon: Icon(Icons.people_rounded),
-              label: 'Patients',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.calendar_month_outlined),
-              selectedIcon: Icon(Icons.calendar_month_rounded),
-              label: 'Schedule',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.science_outlined),
-              selectedIcon: Icon(Icons.science_rounded),
-              label: 'Records',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view_rounded),
-              label: 'More',
-            ),
-          ],
         ),
       ),
     );
