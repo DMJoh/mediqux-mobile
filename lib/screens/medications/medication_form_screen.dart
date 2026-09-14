@@ -5,6 +5,8 @@ import 'package:mediqux_mobile/models/medication/medication.dart';
 import 'package:mediqux_mobile/models/medication/medication_request.dart';
 import 'package:mediqux_mobile/providers/medication_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/form_section.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 
 const _kDosageForms = [
   'Tablet',
@@ -153,10 +155,7 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
       });
       if (!_initialized) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Edit Medication'),
-            backgroundColor: cs.surface,
-          ),
+          appBar: AppBar(title: const Text('Edit Medication')),
           body: const Center(
             child: CircularProgressIndicator(
               strokeCap: StrokeCap.round,
@@ -168,29 +167,24 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
     }
 
     return Scaffold(
-      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
         leading: _isEdit
-            ? BackButton(color: cs.onSurface, onPressed: () => context.pop())
-            : CloseButton(color: cs.onSurface, onPressed: () => context.pop()),
-        title: Text(
-          _isEdit ? 'Edit Medication' : 'Add Medication',
-          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-        ),
+            ? BackButton(onPressed: () => context.pop())
+            : CloseButton(onPressed: () => context.pop()),
+        title: Text(_isEdit ? 'Edit Medication' : 'Add Medication'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton(
+            padding: const EdgeInsets.only(right: 12),
+            child: GradientButton(
+              compact: true,
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: cs.primary,
+                        color: Colors.white,
                       ),
                     )
                   : const Text('Save'),
@@ -201,132 +195,128 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Medication Name *',
-                ),
-                textCapitalization: TextCapitalization.words,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Name is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _genericNameCtrl,
-                decoration: const InputDecoration(labelText: 'Generic Name'),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _manufacturerCtrl,
-                decoration: const InputDecoration(labelText: 'Manufacturer'),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descCtrl,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 4,
-                keyboardType: TextInputType.multiline,
-              ),
-              const SizedBox(height: 20),
-              Row(
+              FormSection(
+                title: 'Details',
                 children: [
-                  Text(
-                    'Dosage Forms',
-                    style: tt.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: cs.primary,
+                  TextFormField(
+                    controller: _nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Medication Name *',
                     ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Name is required';
+                      }
+                      return null;
+                    },
                   ),
-                  const Spacer(),
-                  TextButton.icon(
-                    onPressed: _pickDosageForms,
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Add'),
+                  TextFormField(
+                    controller: _genericNameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Generic Name',
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  TextFormField(
+                    controller: _manufacturerCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Manufacturer',
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  TextFormField(
+                    controller: _descCtrl,
+                    decoration: const InputDecoration(labelText: 'Description'),
+                    maxLines: 4,
+                    keyboardType: TextInputType.multiline,
                   ),
                 ],
               ),
-              if (_selectedForms.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    'No dosage forms selected.',
-                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                )
-              else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _selectedForms
-                      .map(
-                        (f) => Chip(
-                          label: Text(f),
-                          onDeleted: () =>
-                              setState(() => _selectedForms.remove(f)),
-                          deleteIconColor: cs.onSurfaceVariant,
-                        ),
-                      )
-                      .toList(),
-                ),
-              const SizedBox(height: 20),
-              Text(
-                'Strengths',
-                style: tt.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: cs.primary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
+              const SizedBox(height: 16),
+              FormSection(
+                title: 'Dosage Forms',
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _strengthCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Add strength (e.g. 500mg)',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _pickDosageForms,
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Add'),
+                    ),
+                  ),
+                  if (_selectedForms.isEmpty)
+                    Text(
+                      'No dosage forms selected.',
+                      style: tt.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    )
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _selectedForms
+                          .map(
+                            (f) => Chip(
+                              label: Text(f),
+                              onDeleted: () =>
+                                  setState(() => _selectedForms.remove(f)),
+                              deleteIconColor: cs.onSurfaceVariant,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              FormSection(
+                title: 'Strengths',
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _strengthCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Add strength (e.g. 500mg)',
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 12,
+                            ),
+                          ),
+                          onFieldSubmitted: (_) => _addStrength(),
                         ),
                       ),
-                      onFieldSubmitted: (_) => _addStrength(),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        onPressed: _addStrength,
+                        icon: const Icon(Icons.add_rounded),
+                        tooltip: 'Add strength',
+                      ),
+                    ],
+                  ),
+                  if (_strengths.isNotEmpty)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _strengths
+                          .map(
+                            (s) => Chip(
+                              label: Text(s),
+                              onDeleted: () =>
+                                  setState(() => _strengths.remove(s)),
+                              deleteIconColor: cs.onSurfaceVariant,
+                            ),
+                          )
+                          .toList(),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: _addStrength,
-                    icon: const Icon(Icons.add_rounded),
-                    tooltip: 'Add strength',
-                  ),
                 ],
               ),
-              if (_strengths.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _strengths
-                      .map(
-                        (s) => Chip(
-                          label: Text(s),
-                          onDeleted: () => setState(() => _strengths.remove(s)),
-                          deleteIconColor: cs.onSurfaceVariant,
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
-              const SizedBox(height: 32),
             ],
           ),
         ),
