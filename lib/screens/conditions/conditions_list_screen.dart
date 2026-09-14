@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/condition/condition.dart';
 import 'package:mediqux_mobile/providers/condition_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/empty_state_view.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
+import 'package:mediqux_mobile/widgets/status_badge.dart';
 
-Color _severityColor(String? severity) {
+StatusTone _severityTone(String? severity) {
   switch (severity?.toLowerCase()) {
     case 'low':
-      return const Color(0xFF43A047);
+      return StatusTone.positive;
     case 'medium':
-      return const Color(0xFFFF7043);
+      return StatusTone.warning;
     case 'high':
-      return const Color(0xFFEF5350);
+      return StatusTone.critical;
     default:
-      return const Color(0xFF607D8B);
+      return StatusTone.neutral;
   }
 }
 
@@ -48,12 +53,11 @@ class _ConditionsListScreenState extends ConsumerState<ConditionsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
     final conditionsAsync = ref.watch(conditionsProvider);
 
     return Scaffold(
-      backgroundColor: cs.surface,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -63,10 +67,9 @@ class _ConditionsListScreenState extends ConsumerState<ConditionsListScreen> {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Text(
                 'Conditions',
-                style: tt.headlineLarge?.copyWith(
+                style: theme.textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
-                  color: cs.onSurface,
                 ),
               ),
             ),
@@ -110,12 +113,24 @@ class _ConditionsListScreenState extends ConsumerState<ConditionsListScreen> {
                 data: (list) {
                   final filtered = _applySearch(list);
                   if (filtered.isEmpty) {
-                    return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
+                    return EmptyStateView(
+                      icon: Icons.healing_outlined,
+                      title: _searchCtrl.text.isNotEmpty
+                          ? 'No conditions match your search'
+                          : 'No conditions yet',
+                      action: _searchCtrl.text.isEmpty
+                          ? GradientButton(
+                              onPressed: () => context.push('/conditions/new'),
+                              icon: const Icon(Icons.add_rounded),
+                              child: const Text('Add condition'),
+                            )
+                          : null,
+                    );
                   }
                   return RefreshIndicator(
                     onRefresh: () =>
                         ref.read(conditionsProvider.notifier).refresh(),
-                    color: cs.primary,
+                    color: glass.gradientStart,
                     child: ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
@@ -147,162 +162,72 @@ class _ConditionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final severityColor = _severityColor(condition.severity);
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
 
-    return Card(
-      child: InkWell(
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        onTap: () => context.push('/conditions/${condition.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: const BorderRadius.all(Radius.circular(14)),
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      onTap: () => context.push('/conditions/${condition.id}'),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: glass.accentGradient,
+              borderRadius: const BorderRadius.all(Radius.circular(14)),
+            ),
+            child: const Icon(
+              Icons.healing_outlined,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  condition.name,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Icon(
-                  Icons.healing_rounded,
-                  color: cs.onPrimaryContainer,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Text(
-                      condition.name,
-                      style: tt.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface,
+                    if (condition.icdCode != null)
+                      Text(
+                        condition.icdCode!,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: glass.muted2,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        if (condition.icdCode != null) ...[
-                          Text(
-                            condition.icdCode!,
-                            style: tt.labelSmall?.copyWith(
-                              color: cs.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        if (condition.category != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: cs.secondaryContainer,
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(20),
-                              ),
-                            ),
-                            child: Text(
-                              condition.category!,
-                              style: tt.labelSmall?.copyWith(
-                                color: cs.onSecondaryContainer,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    if (condition.severity != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: severityColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            condition.severity!,
-                            style: tt.labelSmall?.copyWith(
-                              color: severityColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                    if (condition.category != null)
+                      StatusBadge(
+                        label: condition.category!,
+                        color: glass.muted,
                       ),
-                    ],
+                    if (condition.severity != null)
+                      StatusBadge.tone(
+                        context,
+                        label: condition.severity!,
+                        tone: _severityTone(condition.severity),
+                      ),
                   ],
                 ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.hasSearch});
-
-  final bool hasSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(48),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: cs.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.healing_rounded,
-                size: 40,
-                color: cs.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              hasSearch
-                  ? 'No conditions match your search'
-                  : 'No conditions yet',
-              style: tt.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: cs.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (!hasSearch)
-              FilledButton.icon(
-                onPressed: () => context.push('/conditions/new'),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Add condition'),
-              ),
-          ],
-        ),
+          Icon(Icons.chevron_right_rounded, color: glass.muted2),
+        ],
       ),
     );
   }
@@ -316,29 +241,14 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load conditions',
-              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+        child: EmptyStateView(
+          icon: Icons.error_outline_rounded,
+          title: 'Failed to load conditions',
+          description: message,
+          action: FilledButton(onPressed: onRetry, child: const Text('Retry')),
         ),
       ),
     );
