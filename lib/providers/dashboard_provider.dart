@@ -19,10 +19,3 @@ Future<AppointmentStats> appointmentStats(Ref ref) async {
   final response = await api.getAppointmentStats();
   return response.data;
 }
-
-@riverpod
-Future<int> patientCount(Ref ref) async {
-  final api = DashboardApi(ref.watch(dioProvider));
-  final response = await api.getPatientCount();
-  return response.count;
-}
