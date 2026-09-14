@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/patient/patient.dart';
 import 'package:mediqux_mobile/providers/patient_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/empty_state_view.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/gradient_avatar.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 
 class PatientsListScreen extends ConsumerStatefulWidget {
   const PatientsListScreen({super.key});
@@ -34,12 +39,11 @@ class _PatientsListScreenState extends ConsumerState<PatientsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
     final patientsAsync = ref.watch(patientsProvider);
 
     return Scaffold(
-      backgroundColor: cs.surface,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -49,10 +53,9 @@ class _PatientsListScreenState extends ConsumerState<PatientsListScreen> {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Text(
                 'Patients',
-                style: tt.headlineLarge?.copyWith(
+                style: theme.textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
-                  color: cs.onSurface,
                 ),
               ),
             ),
@@ -95,14 +98,24 @@ class _PatientsListScreenState extends ConsumerState<PatientsListScreen> {
                 data: (patients) {
                   final filtered = _applySearch(patients);
                   if (filtered.isEmpty) {
-                    return _EmptyState(
-                      hasSearch: _searchController.text.isNotEmpty,
+                    return EmptyStateView(
+                      icon: Icons.people_outline_rounded,
+                      title: _searchController.text.isNotEmpty
+                          ? 'No patients match your search'
+                          : 'No patients yet',
+                      action: _searchController.text.isEmpty
+                          ? GradientButton(
+                              onPressed: () => context.push('/patients/new'),
+                              icon: const Icon(Icons.add_rounded),
+                              child: const Text('Add your first patient'),
+                            )
+                          : null,
                     );
                   }
                   return RefreshIndicator(
                     onRefresh: () =>
                         ref.read(patientsProvider.notifier).refresh(),
-                    color: cs.primary,
+                    color: glass.gradientStart,
                     child: ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
@@ -131,141 +144,60 @@ class _PatientCard extends StatelessWidget {
 
   final Patient patient;
 
-  static const _palette = [
-    Color(0xFF2196F3),
-    Color(0xFF43A047),
-    Color(0xFFFF7043),
-    Color(0xFFAB47BC),
-    Color(0xFF00ACC1),
-    Color(0xFFFFB300),
-  ];
-
-  Color _avatarColor(String name) {
-    final sum = name.codeUnits.fold(0, (a, b) => a + b);
-    return _palette[sum % _palette.length];
-  }
-
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final color = _avatarColor(patient.fullName);
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
 
     final ageLine = [
       if (patient.age != null) '${patient.age} yrs',
       if (patient.gender != null) patient.gender!,
     ].join(' · ');
 
-    return Card(
-      child: InkWell(
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        onTap: () => context.push('/patients/${patient.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: color.withValues(alpha: 0.15),
-                child: Text(
-                  patient.initials,
-                  style: tt.titleMedium?.copyWith(
-                    color: color,
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      onTap: () => context.push('/patients/${patient.id}'),
+      child: Row(
+        children: [
+          GradientAvatar(initials: patient.initials),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  patient.fullName,
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      patient.fullName,
-                      style: tt.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                if (ageLine.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    ageLine,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: glass.muted,
                     ),
-                    if (ageLine.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        ageLine,
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                    if (patient.phone != null || patient.email != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        patient.phone ?? patient.email ?? '',
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
-            ],
+                  ),
+                ],
+                if (patient.phone != null || patient.email != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    patient.phone ?? patient.email ?? '',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: glass.muted2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.hasSearch});
-
-  final bool hasSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(48),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: cs.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.people_rounded,
-                size: 40,
-                color: cs.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              hasSearch ? 'No patients match your search' : 'No patients yet',
-              style: tt.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: cs.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (!hasSearch)
-              FilledButton.icon(
-                onPressed: () => context.push('/patients/new'),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Add your first patient'),
-              ),
-          ],
-        ),
+          Icon(Icons.chevron_right_rounded, color: glass.muted2),
+        ],
       ),
     );
   }
@@ -279,29 +211,14 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load patients',
-              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+        child: EmptyStateView(
+          icon: Icons.error_outline_rounded,
+          title: 'Failed to load patients',
+          description: message,
+          action: FilledButton(onPressed: onRetry, child: const Text('Retry')),
         ),
       ),
     );

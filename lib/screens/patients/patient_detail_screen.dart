@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:mediqux_mobile/models/patient/patient.dart';
 import 'package:mediqux_mobile/providers/patient_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
-import 'package:mediqux_mobile/widgets/detail_hero.dart';
+import 'package:mediqux_mobile/widgets/glass_app_header.dart';
+import 'package:mediqux_mobile/widgets/info_section.dart';
 
 class PatientDetailScreen extends ConsumerWidget {
   const PatientDetailScreen({required this.patientId, super.key});
@@ -48,7 +49,6 @@ class PatientDetailScreen extends ConsumerWidget {
     final patientAsync = ref.watch(patientDetailProvider(patientId));
 
     return Scaffold(
-      backgroundColor: cs.surface,
       body: patientAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(
@@ -80,14 +80,14 @@ class PatientDetailScreen extends ConsumerWidget {
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: DetailHero(
+                child: GlassAppHeader(
                   title: patient.fullName,
                   avatarText: patient.initials,
                   chips: chips,
                   onBack: () => context.pop(),
                   actions: [
                     IconButton(
-                      icon: const Icon(Icons.edit_rounded),
+                      icon: const Icon(Icons.edit_outlined),
                       tooltip: 'Edit',
                       onPressed: () =>
                           context.push('/patients/${patient.id}/edit'),
@@ -105,7 +105,7 @@ class PatientDetailScreen extends ConsumerWidget {
                           child: Row(
                             children: [
                               Icon(
-                                Icons.delete_rounded,
+                                Icons.delete_outline_rounded,
                                 color: cs.error,
                                 size: 20,
                               ),
@@ -124,54 +124,54 @@ class PatientDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      _InfoSection(
+                      InfoSection(
                         title: 'Personal',
                         rows: [
-                          _InfoRow(
+                          InfoRow(
                             label: 'Date of Birth',
                             value: _formatDob(patient.dateOfBirth),
                           ),
-                          _InfoRow(
+                          InfoRow(
                             label: 'Age',
                             value: patient.age != null
                                 ? '${patient.age} years old'
                                 : '-',
                           ),
-                          _InfoRow(
+                          InfoRow(
                             label: 'Gender',
                             value: patient.gender ?? '-',
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _InfoSection(
+                      InfoSection(
                         title: 'Contact',
                         rows: [
-                          _InfoRow(label: 'Phone', value: patient.phone ?? '-'),
-                          _InfoRow(label: 'Email', value: patient.email ?? '-'),
+                          InfoRow(label: 'Phone', value: patient.phone ?? '-'),
+                          InfoRow(label: 'Email', value: patient.email ?? '-'),
                         ],
                       ),
                       if (patient.address != null &&
                           patient.address!.isNotEmpty) ...[
                         const SizedBox(height: 12),
-                        _InfoSection(
+                        InfoSection(
                           title: 'Address',
                           rows: [
-                            _InfoRow(label: 'Address', value: patient.address!),
+                            InfoRow(label: 'Address', value: patient.address!),
                           ],
                         ),
                       ],
                       if (patient.emergencyContactName != null ||
                           patient.emergencyContactPhone != null) ...[
                         const SizedBox(height: 12),
-                        _InfoSection(
+                        InfoSection(
                           title: 'Emergency',
                           rows: [
-                            _InfoRow(
+                            InfoRow(
                               label: 'Name',
                               value: patient.emergencyContactName ?? '-',
                             ),
-                            _InfoRow(
+                            InfoRow(
                               label: 'Phone',
                               value: patient.emergencyContactPhone ?? '-',
                             ),
@@ -195,89 +195,5 @@ class PatientDetailScreen extends ConsumerWidget {
     final dt = DateTime.tryParse(dob);
     if (dt == null) return dob;
     return DateFormat('MMM d, yyyy').format(dt);
-  }
-}
-
-class _InfoSection extends StatelessWidget {
-  const _InfoSection({required this.title, required this.rows});
-
-  final String title;
-  final List<_InfoRow> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: tt.labelSmall?.copyWith(
-              color: cs.primary,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-            ),
-          ),
-          const SizedBox(height: 4),
-          for (int i = 0; i < rows.length; i++) ...[
-            rows[i],
-            if (i < rows.length - 1)
-              Divider(
-                height: 1,
-                thickness: 0.5,
-                color: cs.outlineVariant.withValues(alpha: 0.5),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
