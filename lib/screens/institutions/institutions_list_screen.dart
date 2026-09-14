@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/institution/institution.dart';
 import 'package:mediqux_mobile/providers/institution_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/empty_state_view.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
+import 'package:mediqux_mobile/widgets/status_badge.dart';
 
 // Returns icon and color for a given institution type.
 IconData institutionIcon(String? type) {
@@ -76,12 +81,11 @@ class _InstitutionsListScreenState
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
     final institutionsAsync = ref.watch(institutionsProvider);
 
     return Scaffold(
-      backgroundColor: cs.surface,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -91,10 +95,9 @@ class _InstitutionsListScreenState
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Text(
                 'Institutions',
-                style: tt.headlineLarge?.copyWith(
+                style: theme.textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
-                  color: cs.onSurface,
                 ),
               ),
             ),
@@ -138,12 +141,25 @@ class _InstitutionsListScreenState
                 data: (list) {
                   final filtered = _applySearch(list);
                   if (filtered.isEmpty) {
-                    return _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty);
+                    return EmptyStateView(
+                      icon: Icons.business_outlined,
+                      title: _searchCtrl.text.isNotEmpty
+                          ? 'No institutions match your search'
+                          : 'No institutions yet',
+                      action: _searchCtrl.text.isEmpty
+                          ? GradientButton(
+                              onPressed: () =>
+                                  context.push('/institutions/new'),
+                              icon: const Icon(Icons.add_rounded),
+                              child: const Text('Add your first institution'),
+                            )
+                          : null,
+                    );
                   }
                   return RefreshIndicator(
                     onRefresh: () =>
                         ref.read(institutionsProvider.notifier).refresh(),
-                    color: cs.primary,
+                    color: glass.gradientStart,
                     child: ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
@@ -175,153 +191,73 @@ class _InstitutionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
     final color = institutionColor(institution.type);
     final icon = institutionIcon(institution.type);
     final dc = institution.doctorCount;
 
-    return Card(
-      child: InkWell(
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        onTap: () => context.push('/institutions/${institution.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: const BorderRadius.all(Radius.circular(14)),
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      onTap: () => context.push('/institutions/${institution.id}'),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: const BorderRadius.all(Radius.circular(14)),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  institution.name,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 5),
+                Row(
                   children: [
-                    Text(
-                      institution.name,
-                      style: tt.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        if (institution.type != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.1),
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(20),
-                              ),
-                            ),
-                            child: Text(
-                              institution.type!,
-                              style: tt.labelSmall?.copyWith(
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Icon(
-                          Icons.person_rounded,
-                          size: 13,
-                          color: cs.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '$dc doctor${dc != 1 ? 's' : ''}',
-                          style: tt.labelSmall?.copyWith(
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (institution.phone != null ||
-                        institution.address != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        institution.phone ?? institution.address ?? '',
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    if (institution.type != null) ...[
+                      StatusBadge(label: institution.type!, color: color),
+                      const SizedBox(width: 8),
                     ],
+                    Icon(Icons.person_rounded, size: 13, color: glass.muted2),
+                    const SizedBox(width: 3),
+                    Text(
+                      '$dc doctor${dc != 1 ? 's' : ''}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: glass.muted2,
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
-            ],
+                if (institution.phone != null ||
+                    institution.address != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    institution.phone ?? institution.address ?? '',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: glass.muted2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.hasSearch});
-
-  final bool hasSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(48),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: cs.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.business_rounded,
-                size: 40,
-                color: cs.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              hasSearch
-                  ? 'No institutions match your search'
-                  : 'No institutions yet',
-              style: tt.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: cs.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (!hasSearch)
-              FilledButton.icon(
-                onPressed: () => context.push('/institutions/new'),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Add institution'),
-              ),
-          ],
-        ),
+          Icon(Icons.chevron_right_rounded, color: glass.muted2),
+        ],
       ),
     );
   }
@@ -335,29 +271,14 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load institutions',
-              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+        child: EmptyStateView(
+          icon: Icons.error_outline_rounded,
+          title: 'Failed to load institutions',
+          description: message,
+          action: FilledButton(onPressed: onRetry, child: const Text('Retry')),
         ),
       ),
     );
