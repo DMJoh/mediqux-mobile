@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
+import 'package:mediqux_mobile/widgets/aurora_background.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 import 'package:mediqux_mobile/widgets/mediqux_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -104,237 +107,202 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
 
     final authState = ref.watch(authProvider);
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
     final isLoading = _isLoading || authState.isLoading;
 
     return Scaffold(
       body: Stack(
         children: [
-          const FractionallySizedBox(
-            alignment: Alignment.topCenter,
-            heightFactor: 0.38,
-            widthFactor: 1,
-            child: DecoratedBox(
-              decoration: BoxDecoration(gradient: AppTheme.headerGradient),
-            ),
-          ),
+          const Positioned.fill(child: AuroraBackground()),
           SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const MediquxLogo(),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Mediqux',
-                        style: tt.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Patient Management System',
-                        style: tt.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.75),
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
                 ),
-
-                Expanded(
-                  flex: 7,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: cs.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(28),
-                      ),
-                    ),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Sign In',
-                              style: tt.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: cs.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Enter your server and credentials',
-                              style: tt.bodyMedium?.copyWith(
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-
-                            TextFormField(
-                              controller: _serverController,
-                              keyboardType: TextInputType.url,
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Server Address',
-                                hintText: 'http://192.168.1.5:3000',
-                                prefixIcon: Icon(Icons.dns_rounded),
-                              ),
-                              onChanged: (_) {
-                                if (_serverError != null) {
-                                  setState(() => _serverError = null);
-                                }
-                              },
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return 'Server address is required';
-                                }
-                                final lower = v.trim().toLowerCase();
-                                if (!lower.startsWith('http://') &&
-                                    !lower.startsWith('https://')) {
-                                  return 'Must start with http:// or https://';
-                                }
-                                return null;
-                              },
-                            ),
-
-                            if (_serverError != null) ...[
-                              const SizedBox(height: 10),
-                              _ErrorBanner(message: _serverError!),
-                            ],
-
-                            const SizedBox(height: 14),
-
-                            AutofillGroup(
-                              child: Column(
-                                children: [
-                                  TextFormField(
-                                    controller: _usernameController,
-                                    autocorrect: false,
-                                    enableSuggestions: false,
-                                    textInputAction: TextInputAction.next,
-                                    autofillHints: const [
-                                      AutofillHints.username,
-                                      AutofillHints.email,
-                                    ],
-                                    decoration: const InputDecoration(
-                                      labelText: 'Username or Email',
-                                      prefixIcon: Icon(
-                                        Icons.person_outline_rounded,
-                                      ),
-                                    ),
-                                    validator: (v) =>
-                                        (v == null || v.trim().isEmpty)
-                                        ? 'Username is required'
-                                        : null,
-                                  ),
-                                  const SizedBox(height: 14),
-                                  TextFormField(
-                                    controller: _passwordController,
-                                    focusNode: _passwordFocus,
-                                    obscureText: _obscurePassword,
-                                    textInputAction: TextInputAction.done,
-                                    autofillHints: const [
-                                      AutofillHints.password,
-                                    ],
-                                    onFieldSubmitted: (_) => _submit(),
-                                    decoration: InputDecoration(
-                                      labelText: 'Password',
-                                      prefixIcon: const Icon(
-                                        Icons.lock_outline_rounded,
-                                      ),
-                                      suffixIcon: IconButton(
-                                        icon: Icon(
-                                          _obscurePassword
-                                              ? Icons.visibility_rounded
-                                              : Icons.visibility_off_rounded,
-                                        ),
-                                        onPressed: () => setState(
-                                          () => _obscurePassword =
-                                              !_obscurePassword,
-                                        ),
-                                      ),
-                                    ),
-                                    validator: (v) => (v == null || v.isEmpty)
-                                        ? 'Password is required'
-                                        : null,
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            if (authState.hasError) ...[
-                              const SizedBox(height: 14),
-                              _ErrorBanner(
-                                message: authState.error is String
-                                    ? authState.error! as String
-                                    : 'An unexpected error occurred',
-                              ),
-                            ],
-
-                            const SizedBox(height: 24),
-
-                            SizedBox(
-                              height: 54,
-                              child: FilledButton(
-                                onPressed: isLoading ? null : _submit,
-                                child: isLoading
-                                    ? const SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Text('Sign In'),
-                              ),
-                            ),
-
-                            const SizedBox(height: 20),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: GlassCard(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Center(
+                            child: Column(
                               children: [
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  size: 15,
-                                  color: cs.onSurfaceVariant.withValues(
-                                    alpha: 0.6,
-                                  ),
+                                const MediquxLogo(size: 56),
+                                const SizedBox(height: 14),
+                                Text(
+                                  'Mediqux',
+                                  style: theme.textTheme.headlineSmall
+                                      ?.copyWith(fontWeight: FontWeight.w800),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Contact your Mediqux administrator '
-                                    'for the server address and credentials.',
-                                    style: tt.bodySmall?.copyWith(
-                                      color: cs.onSurfaceVariant.withValues(
-                                        alpha: 0.6,
-                                      ),
-                                    ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Patient Management System',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: glass.muted,
+                                    letterSpacing: 0.6,
                                   ),
                                 ),
                               ],
                             ),
+                          ),
+                          const SizedBox(height: 28),
+
+                          TextFormField(
+                            controller: _serverController,
+                            keyboardType: TextInputType.url,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText: 'Server Address',
+                              hintText: 'http://192.168.1.5:3000',
+                              prefixIcon: Icon(
+                                Icons.dns_outlined,
+                              ),
+                            ),
+                            onChanged: (_) {
+                              if (_serverError != null) {
+                                setState(() => _serverError = null);
+                              }
+                            },
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Server address is required';
+                              }
+                              final lower = v.trim().toLowerCase();
+                              if (!lower.startsWith('http://') &&
+                                  !lower.startsWith('https://')) {
+                                return 'Must start with http:// or https://';
+                              }
+                              return null;
+                            },
+                          ),
+
+                          if (_serverError != null) ...[
+                            const SizedBox(height: 10),
+                            _ErrorBanner(message: _serverError!),
                           ],
-                        ),
+
+                          const SizedBox(height: 14),
+
+                          AutofillGroup(
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: _usernameController,
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  textInputAction: TextInputAction.next,
+                                  autofillHints: const [
+                                    AutofillHints.username,
+                                    AutofillHints.email,
+                                  ],
+                                  decoration: const InputDecoration(
+                                    labelText: 'Username or Email',
+                                    prefixIcon: Icon(
+                                      Icons.person_outline_rounded,
+                                    ),
+                                  ),
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                      ? 'Username is required'
+                                      : null,
+                                ),
+                                const SizedBox(height: 14),
+                                TextFormField(
+                                  controller: _passwordController,
+                                  focusNode: _passwordFocus,
+                                  obscureText: _obscurePassword,
+                                  textInputAction: TextInputAction.done,
+                                  autofillHints: const [
+                                    AutofillHints.password,
+                                  ],
+                                  onFieldSubmitted: (_) => _submit(),
+                                  decoration: InputDecoration(
+                                    labelText: 'Password',
+                                    prefixIcon: const Icon(
+                                      Icons.lock_outline_rounded,
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_outlined
+                                            : Icons.visibility_off_outlined,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _obscurePassword =
+                                            !_obscurePassword,
+                                      ),
+                                    ),
+                                  ),
+                                  validator: (v) => (v == null || v.isEmpty)
+                                      ? 'Password is required'
+                                      : null,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          if (authState.hasError) ...[
+                            const SizedBox(height: 14),
+                            _ErrorBanner(
+                              message: authState.error is String
+                                  ? authState.error! as String
+                                  : 'An unexpected error occurred',
+                            ),
+                          ],
+
+                          const SizedBox(height: 24),
+
+                          GradientButton(
+                            onPressed: isLoading ? null : _submit,
+                            child: isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      strokeCap: StrokeCap.round,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Sign In'),
+                          ),
+
+                          const SizedBox(height: 20),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 15,
+                                color: glass.muted2,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Contact your Mediqux administrator '
+                                  'for the server address and credentials.',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: glass.muted2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -355,7 +323,7 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: cs.errorContainer,
+        color: cs.error.withValues(alpha: 0.12),
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         border: Border.all(color: cs.error.withValues(alpha: 0.3)),
       ),
@@ -366,7 +334,7 @@ class _ErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: tt.bodySmall?.copyWith(color: cs.onErrorContainer),
+              style: tt.bodySmall?.copyWith(color: cs.error),
             ),
           ),
         ],
