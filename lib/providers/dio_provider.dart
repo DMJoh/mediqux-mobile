@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mediqux_mobile/providers/refresh_coordinator_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
 import 'package:mediqux_mobile/providers/session_provider.dart';
 import 'package:mediqux_mobile/providers/storage_provider.dart';
-import 'package:mediqux_mobile/services/auth_api.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final storage = ref.watch(storageServiceProvider);
@@ -30,33 +30,37 @@ final dioProvider = Provider<Dio>((ref) {
         return handler.next(options);
       },
       onError: (error, handler) async {
-        if (error.response?.statusCode == 401) {
+        final status = error.response?.statusCode;
+        final body = error.response?.data;
+        // Backend returns 403 (not 401) for an expired token, with
+        // `expired: true` in the body — a plain 403 without that flag means
+        // the token is otherwise invalid and refreshing it would fail too.
+        final isExpired =
+            status == 403 && body is Map && body['expired'] == true;
+        final isRecoverable = status == 401 || isExpired;
+        if (isRecoverable) {
           final alreadyRefreshed =
               error.requestOptions.extra['_refreshed'] == true;
           if (!alreadyRefreshed) {
-            try {
-              final refreshDio = Dio(BaseOptions(baseUrl: serverUrl));
-              final oldToken = await storage.readToken();
-              if (oldToken != null) {
-                refreshDio.options.headers['Authorization'] =
-                    'Bearer $oldToken';
-              }
-              final api = AuthApi(refreshDio);
-              final response = await api.refresh();
-              if (response.success && response.data != null) {
-                await storage.saveToken(response.data!.token);
+            final newToken = await ref
+                .read(refreshCoordinatorProvider.notifier)
+                .refresh();
+            if (newToken != null) {
+              try {
                 final retryOpts = error.requestOptions.copyWith(
                   extra: {...error.requestOptions.extra, '_refreshed': true},
                 );
-                retryOpts.headers['Authorization'] =
-                    'Bearer ${response.data!.token}';
+                retryOpts.headers['Authorization'] = 'Bearer $newToken';
                 final retryResponse = await dio.fetch<dynamic>(retryOpts);
                 return handler.resolve(retryResponse);
+              } on Object {
+                // Retry with the fresh token also failed — fall through.
               }
-            } on Object {
-              // Refresh failed — fall through to logout.
             }
           }
+          await storage.clearAuth();
+          ref.read(sessionVersionProvider.notifier).increment();
+        } else if (status == 403) {
           await storage.clearAuth();
           ref.read(sessionVersionProvider.notifier).increment();
         }

@@ -5,10 +5,10 @@ import 'package:dio/dio.dart';
 import 'package:mediqux_mobile/models/auth/login_request.dart';
 import 'package:mediqux_mobile/models/user.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
+import 'package:mediqux_mobile/providers/refresh_coordinator_provider.dart';
 import 'package:mediqux_mobile/providers/session_provider.dart';
 import 'package:mediqux_mobile/providers/storage_provider.dart';
 import 'package:mediqux_mobile/services/auth_api.dart';
-import 'package:mediqux_mobile/services/storage_service.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -63,14 +63,14 @@ class Auth extends _$Auth {
       return null;
     }
     if (_isJwtExpiringSoon(token)) {
-      unawaited(_silentRefresh(storage));
+      unawaited(_silentRefresh());
     } else {
-      _scheduleProactiveRefresh(token, storage);
+      _scheduleProactiveRefresh(token);
     }
     return storage.readUser();
   }
 
-  void _scheduleProactiveRefresh(String token, StorageService storage) {
+  void _scheduleProactiveRefresh(String token) {
     _refreshTimer?.cancel();
     final exp = _jwtPayload(token)?['exp'];
     if (exp == null) return;
@@ -81,20 +81,25 @@ class Auth extends _$Auth {
         DateTime.now().millisecondsSinceEpoch;
     if (delayMs <= 0) return;
     _refreshTimer = Timer(Duration(milliseconds: delayMs), () {
-      unawaited(_silentRefresh(storage));
+      unawaited(_silentRefresh());
     });
   }
 
-  Future<void> _silentRefresh(StorageService storage) async {
-    try {
-      final api = AuthApi(ref.read(dioProvider));
-      final response = await api.refresh();
-      if (response.success && response.data != null) {
-        await storage.saveToken(response.data!.token);
-      }
-    } on Object {
-      // Refresh failed — current token is still valid; retry next open.
+  Future<void> _silentRefresh() async {
+    final newToken = await ref
+        .read(refreshCoordinatorProvider.notifier)
+        .refresh();
+    if (newToken == null) {
+      // Refresh failed while the token was still valid — try again soon
+      // instead of waiting until the next app open/resume.
+      _refreshTimer?.cancel();
+      _refreshTimer = Timer(
+        const Duration(minutes: 2),
+        () => unawaited(_silentRefresh()),
+      );
+      return;
     }
+    _scheduleProactiveRefresh(newToken);
   }
 
   Future<void> login(String username, String password) async {
@@ -123,6 +128,7 @@ class Auth extends _$Auth {
   }
 
   Future<void> logout() async {
+    _refreshTimer?.cancel();
     await ref.read(storageServiceProvider).clearAuth();
     state = const AsyncValue.data(null);
   }
