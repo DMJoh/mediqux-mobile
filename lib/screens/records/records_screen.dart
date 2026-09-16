@@ -15,9 +15,9 @@ class RecordsScreen extends StatelessWidget {
           children: [
             Text(
               'Records',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 16),
             GlassCard(

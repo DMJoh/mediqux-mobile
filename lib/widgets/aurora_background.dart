@@ -93,10 +93,7 @@ class _AuroraBlobs extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: 0.35),
-              color.withValues(alpha: 0),
-            ],
+            colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0)],
           ),
         ),
       ),

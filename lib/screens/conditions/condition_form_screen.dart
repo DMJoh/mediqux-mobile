@@ -210,9 +210,7 @@ class _ConditionFormScreenState extends ConsumerState<ConditionFormScreen> {
                 children: [
                   TextFormField(
                     controller: _descCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                    ),
+                    decoration: const InputDecoration(labelText: 'Description'),
                     maxLines: 4,
                     keyboardType: TextInputType.multiline,
                   ),

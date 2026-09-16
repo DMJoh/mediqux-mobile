@@ -252,9 +252,7 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
                   if (_selectedForms.isEmpty)
                     Text(
                       'No dosage forms selected.',
-                      style: tt.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                     )
                   else
                     Wrap(

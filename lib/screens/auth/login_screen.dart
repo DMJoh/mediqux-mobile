@@ -163,9 +163,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             decoration: const InputDecoration(
                               labelText: 'Server Address',
                               hintText: 'http://192.168.1.5:3000',
-                              prefixIcon: Icon(
-                                Icons.dns_outlined,
-                              ),
+                              prefixIcon: Icon(Icons.dns_outlined),
                             ),
                             onChanged: (_) {
                               if (_serverError != null) {
@@ -221,9 +219,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   focusNode: _passwordFocus,
                                   obscureText: _obscurePassword,
                                   textInputAction: TextInputAction.done,
-                                  autofillHints: const [
-                                    AutofillHints.password,
-                                  ],
+                                  autofillHints: const [AutofillHints.password],
                                   onFieldSubmitted: (_) => _submit(),
                                   decoration: InputDecoration(
                                     labelText: 'Password',

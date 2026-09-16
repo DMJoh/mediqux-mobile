@@ -179,9 +179,7 @@ class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
                     value: _selectedType,
                     decoration: const InputDecoration(labelText: 'Type'),
                     items: _kTypes
-                        .map(
-                          (t) => DropdownMenuItem(value: t, child: Text(t)),
-                        )
+                        .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                         .toList(),
                     onChanged: (v) => setState(() => _selectedType = v),
                   ),
@@ -213,9 +211,7 @@ class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
                       if (v == null || v.trim().isEmpty) {
                         return null;
                       }
-                      if (!RegExp(
-                        r'^[^@]+@[^@]+\.[^@]+$',
-                      ).hasMatch(v.trim())) {
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
                         return 'Invalid email address';
                       }
                       return null;
