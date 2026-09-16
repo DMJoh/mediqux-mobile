@@ -296,9 +296,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Date & Time *',
                                 hintText: 'Select date and time',
-                                suffixIcon: Icon(
-                                  Icons.calendar_today_outlined,
-                                ),
+                                suffixIcon: Icon(Icons.calendar_today_outlined),
                               ),
                               controller: TextEditingController(
                                 text: _formatDateTime(),
@@ -373,9 +371,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
                           // Deprecated in favour of DropdownMenu.
                           // ignore: deprecated_member_use
                           value: _selectedType,
-                          decoration: const InputDecoration(
-                            labelText: 'Type',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Type'),
                           items: _kTypes
                               .map(
                                 (t) =>
@@ -407,9 +403,7 @@ class _AppointmentFormScreenState extends ConsumerState<AppointmentFormScreen> {
                         ),
                         TextFormField(
                           controller: _notesCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Notes',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Notes'),
                           maxLines: 3,
                         ),
                         TextFormField(

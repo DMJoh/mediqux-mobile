@@ -318,9 +318,7 @@ class _DiagnosticStudyFormScreenState
                       // Deprecated in favour of DropdownMenu.
                       // ignore: deprecated_member_use
                       value: _selectedPatientId,
-                      decoration: const InputDecoration(
-                        labelText: 'Patient *',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Patient *'),
                       items: _patients
                           .map(
                             (p) => DropdownMenuItem(
@@ -329,8 +327,7 @@ class _DiagnosticStudyFormScreenState
                             ),
                           )
                           .toList(),
-                      onChanged: (v) =>
-                          setState(() => _selectedPatientId = v),
+                      onChanged: (v) => setState(() => _selectedPatientId = v),
                       validator: (v) =>
                           v == null ? 'Patient is required' : null,
                     ),
@@ -348,8 +345,7 @@ class _DiagnosticStudyFormScreenState
                             (t) => DropdownMenuItem(value: t, child: Text(t)),
                           )
                           .toList(),
-                      onChanged: (v) =>
-                          setState(() => _selectedStudyType = v),
+                      onChanged: (v) => setState(() => _selectedStudyType = v),
                       validator: (v) =>
                           v == null ? 'Study type is required' : null,
                     ),
@@ -368,9 +364,8 @@ class _DiagnosticStudyFormScreenState
                                 ? dateFmt.format(_selectedDate!)
                                 : '',
                           ),
-                          validator: (_) => _selectedDate == null
-                              ? 'Date is required'
-                              : null,
+                          validator: (_) =>
+                              _selectedDate == null ? 'Date is required' : null,
                         ),
                       ),
                     ),
@@ -471,9 +466,7 @@ class _DiagnosticStudyFormScreenState
                     ),
                     TextFormField(
                       controller: _findingsCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Findings',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Findings'),
                       maxLines: 3,
                     ),
                     TextFormField(
@@ -511,9 +504,7 @@ class _DiagnosticStudyFormScreenState
                           Expanded(
                             child: Text(
                               _fileName!,
-                              style: tt.bodySmall?.copyWith(
-                                color: cs.primary,
-                              ),
+                              style: tt.bodySmall?.copyWith(color: cs.primary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),

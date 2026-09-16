@@ -271,8 +271,7 @@ class _PatientFormScreenState extends ConsumerState<PatientFormScreen> {
                               child: Text('Other'),
                             ),
                           ],
-                          onChanged: (v) =>
-                              setState(() => _selectedGender = v),
+                          onChanged: (v) => setState(() => _selectedGender = v),
                         ),
                       ),
                     ],
@@ -339,9 +338,7 @@ class _PatientFormScreenState extends ConsumerState<PatientFormScreen> {
                       if (v == null || v.trim().isEmpty) {
                         return null;
                       }
-                      final valid = RegExp(
-                        r'^[0-9+\s\-]+$',
-                      ).hasMatch(v.trim());
+                      final valid = RegExp(r'^[0-9+\s\-]+$').hasMatch(v.trim());
                       return valid ? null : 'Invalid phone number';
                     },
                   ),

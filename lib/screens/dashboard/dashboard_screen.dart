@@ -118,9 +118,7 @@ class DashboardScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Text(
                       'Upcoming Appointments',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleMedium?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1046,9 +1044,7 @@ class _AppointmentCard extends StatelessWidget {
                         fontSize: 11,
                         color: isToday ? glass.gradientEnd : glass.muted,
                       ).copyWith(
-                        fontWeight: isToday
-                            ? FontWeight.w700
-                            : FontWeight.w500,
+                        fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
                       ),
                 ),
                 if (appointment.doctorName.isNotEmpty) ...[
