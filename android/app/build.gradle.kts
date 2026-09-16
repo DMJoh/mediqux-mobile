@@ -42,9 +42,12 @@ android {
 
     buildTypes {
         debug {
-            if (keystorePropertiesFile.exists()) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            // Debug builds always use Flutter's default debug signing
+            // (~/.android/debug.keystore) — never the release key, so a
+            // debug install never depends on release credentials being
+            // configured.
         }
         release {
             signingConfig = if (keystorePropertiesFile.exists()) {

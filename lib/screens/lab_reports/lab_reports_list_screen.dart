@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/lab_report/lab_report.dart';
 import 'package:mediqux_mobile/providers/lab_report_provider.dart';
-import 'package:mediqux_mobile/widgets/app_drawer.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/empty_state_view.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
+import 'package:mediqux_mobile/widgets/status_badge.dart';
 
 class LabReportsListScreen extends ConsumerStatefulWidget {
   const LabReportsListScreen({super.key});
@@ -15,7 +20,6 @@ class LabReportsListScreen extends ConsumerStatefulWidget {
 }
 
 class _LabReportsListScreenState extends ConsumerState<LabReportsListScreen> {
-  bool _isSearching = false;
   final _searchCtrl = TextEditingController();
 
   @override
@@ -49,111 +53,103 @@ class _LabReportsListScreenState extends ConsumerState<LabReportsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
+    final tt = theme.textTheme;
     final reportsAsync = ref.watch(labReportsProvider);
 
     return Scaffold(
-      backgroundColor: cs.surface,
-      drawer: const AppDrawer(currentRoute: '/lab-reports'),
-      appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
-        leading: _isSearching
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => setState(() {
-                  _isSearching = false;
-                  _searchCtrl.clear();
-                }),
-              )
-            : Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.menu_rounded),
-                  onPressed: () => Scaffold.of(ctx).openDrawer(),
-                ),
-              ),
-        centerTitle: true,
-        title: _isSearching
-            ? TextField(
-                controller: _searchCtrl,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Search lab reports...',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                onChanged: (_) => setState(() {}),
-              )
-            : Text(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Text(
                 'Lab Reports',
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontWeight: FontWeight.w700,
+                style: tt.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
                 ),
               ),
-        actions: [
-          if (_isSearching)
-            IconButton(
-              icon: const Icon(Icons.clear_rounded),
-              onPressed: () {
-                if (_searchCtrl.text.isEmpty) {
-                  setState(() => _isSearching = false);
-                } else {
-                  setState(_searchCtrl.clear);
-                }
-              },
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.search_rounded),
-              onPressed: () => setState(() => _isSearching = true),
             ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(labReportsProvider.notifier).refresh(),
-        color: cs.primary,
-        child: reportsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: _ErrorState(
-                  message: e.toString(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: SearchBar(
+                controller: _searchCtrl,
+                hintText: 'Search lab reports…',
+                leading: const Icon(Icons.search_rounded),
+                trailing: [
+                  ValueListenableBuilder(
+                    valueListenable: _searchCtrl,
+                    builder: (_, val, __) => val.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: reportsAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(
+                    strokeCap: StrokeCap.round,
+                    strokeWidth: 3,
+                  ),
+                ),
+                error: (e, _) => _ErrorState(
+                  message: friendlyError(e),
                   onRetry: () =>
                       ref.read(labReportsProvider.notifier).refresh(),
                 ),
+                data: (list) {
+                  final filtered = _applySearch(list);
+                  if (filtered.isEmpty) {
+                    return EmptyStateView(
+                      icon: Icons.science_outlined,
+                      title: _searchCtrl.text.isNotEmpty
+                          ? 'No lab reports match your search'
+                          : 'No lab reports yet',
+                      action: _searchCtrl.text.isEmpty
+                          ? GradientButton(
+                              onPressed: () => context.push('/lab-reports/new'),
+                              icon: const Icon(Icons.add_rounded),
+                              child: const Text('Add lab report'),
+                            )
+                          : null,
+                    );
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () =>
+                        ref.read(labReportsProvider.notifier).refresh(),
+                    color: glass.gradientStart,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) => _LabReportCard(
+                        report: filtered[i],
+                        statusColor: _statusColor(
+                          context,
+                          filtered[i].testType,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-          data: (list) {
-            final filtered = _applySearch(list);
-            if (filtered.isEmpty) {
-              return LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
-                  ),
-                ),
-              );
-            }
-            return ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-              itemCount: filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) => _LabReportCard(
-                report: filtered[i],
-                statusColor: _statusColor(context, filtered[i].testType),
-              ),
-            );
-          },
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -173,146 +169,73 @@ class _LabReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
+    final tt = theme.textTheme;
     final dateFmt = DateFormat('MMM d, yyyy');
 
-    return Card(
-      child: InkWell(
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        onTap: () => context.push('/lab-reports/${report.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: const BorderRadius.all(Radius.circular(12)),
-                ),
-                child: Icon(
-                  Icons.science_rounded,
-                  size: 22,
-                  color: cs.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      onTap: () => context.push('/lab-reports/${report.id}'),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: glass.glass2,
+              borderRadius: const BorderRadius.all(Radius.circular(12)),
+              border: Border.all(color: glass.glassBorder),
+            ),
+            child: Icon(
+              Icons.science_outlined,
+              size: 22,
+              color: glass.gradientStart,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            report.testName,
-                            style: tt.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: cs.onSurface,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Expanded(
+                      child: Text(
+                        report.testName,
+                        style: tt.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
-                        if (report.hasFile)
-                          Icon(
-                            Icons.attach_file_rounded,
-                            size: 16,
-                            color: cs.primary,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      report.patientName,
-                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      dateFmt.format(report.testDate),
-                      style: tt.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (report.hasFile)
+                      Icon(
+                        Icons.attach_file_rounded,
+                        size: 16,
+                        color: glass.gradientStart,
+                      ),
                   ],
                 ),
-              ),
-              if (report.testType != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: const BorderRadius.all(Radius.circular(20)),
-                  ),
-                  child: Text(
-                    report.testType!,
-                    style: tt.labelSmall?.copyWith(
-                      color: statusColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                const SizedBox(height: 2),
+                Text(
+                  report.patientName,
+                  style: tt.bodySmall?.copyWith(color: glass.muted),
                 ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  dateFmt.format(report.testDate),
+                  style: tt.bodySmall?.copyWith(color: glass.muted2),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.hasSearch});
-
-  final bool hasSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(48),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: cs.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.science_rounded,
-                size: 40,
-                color: cs.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              hasSearch
-                  ? 'No lab reports match your search'
-                  : 'No lab reports yet',
-              style: tt.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: cs.onSurface,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            if (!hasSearch)
-              FilledButton.icon(
-                onPressed: () => context.push('/lab-reports/new'),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Add lab report'),
-              ),
+          if (report.testType != null) ...[
+            const SizedBox(width: 8),
+            StatusBadge(label: report.testType!, color: statusColor),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -326,29 +249,14 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load lab reports',
-              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+        child: EmptyStateView(
+          icon: Icons.error_outline_rounded,
+          title: 'Failed to load lab reports',
+          description: message,
+          action: FilledButton(onPressed: onRetry, child: const Text('Retry')),
         ),
       ),
     );

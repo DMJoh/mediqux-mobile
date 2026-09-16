@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
+import 'package:mediqux_mobile/widgets/aurora_background.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 import 'package:mediqux_mobile/widgets/mediqux_logo.dart';
 
 class ServerSetupScreen extends ConsumerStatefulWidget {
@@ -75,7 +78,7 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
 
     await ref.read(serverConfigProvider.notifier).setUrl(url);
     if (!mounted) return;
-    final isLoggedIn = ref.read(authProvider).valueOrNull != null;
+    final isLoggedIn = ref.read(authProvider).value != null;
     if (isLoggedIn) {
       context.go('/');
     }
@@ -84,13 +87,13 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final isLoggedIn = ref.watch(authProvider).valueOrNull != null;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
+    final isLoggedIn = ref.watch(authProvider).value != null;
 
     // Pre-fill with the existing URL when opened from settings.
     if (!_initialized) {
-      final existing = ref.read(serverConfigProvider).valueOrNull;
+      final existing = ref.read(serverConfigProvider).value;
       if (existing != null) {
         _urlController.text = existing.replaceFirst(RegExp(r'/api$'), '');
       }
@@ -100,154 +103,123 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          const FractionallySizedBox(
-            alignment: Alignment.topCenter,
-            heightFactor: 0.42,
-            widthFactor: 1,
-            child: DecoratedBox(
-              decoration: BoxDecoration(gradient: AppTheme.headerGradient),
-            ),
-          ),
+          const Positioned.fill(child: AuroraBackground()),
           SafeArea(
             child: Column(
               children: [
                 if (isLoggedIn)
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: BackButton(
-                      color: Colors.white,
-                      onPressed: () => context.pop(),
-                    ),
+                    child: BackButton(onPressed: () => context.pop()),
                   ),
                 Expanded(
-                  flex: 4,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const MediquxLogo(size: 72),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Mediqux',
-                        style: tt.headlineMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Connect to your server',
-                        style: tt.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.75),
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 6,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: cs.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(28),
-                      ),
-                    ),
+                  child: Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Server Setup',
-                              style: tt.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: cs.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Enter your Mediqux server address',
-                              style: tt.bodyMedium?.copyWith(
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-                            TextFormField(
-                              controller: _urlController,
-                              keyboardType: TextInputType.url,
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              decoration: const InputDecoration(
-                                labelText: 'Server Address',
-                                hintText: 'http://192.168.1.5:3000',
-                                prefixIcon: Icon(Icons.dns_rounded),
-                              ),
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _connect(),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return 'Server address is required';
-                                }
-                                final lower = v.trim().toLowerCase();
-                                if (!lower.startsWith('http://') &&
-                                    !lower.startsWith('https://')) {
-                                  return 'Must start with '
-                                      'http:// or https://';
-                                }
-                                return null;
-                              },
-                            ),
-                            if (_errorMessage != null) ...[
-                              const SizedBox(height: 16),
-                              _ErrorBanner(message: _errorMessage!),
-                            ],
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              height: 54,
-                              child: FilledButton(
-                                onPressed: _isLoading ? null : _connect,
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Text('Connect'),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 24,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        child: GlassCard(
+                          padding: const EdgeInsets.all(24),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  size: 15,
-                                  color: cs.onSurfaceVariant.withValues(
-                                    alpha: 0.6,
+                                Center(
+                                  child: Column(
+                                    children: [
+                                      const MediquxLogo(size: 60),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Mediqux',
+                                        style: theme.textTheme.headlineMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Connect to your server',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: glass.muted,
+                                              letterSpacing: 0.6,
+                                            ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Contact your Mediqux administrator '
-                                    'for the server address.',
-                                    style: tt.bodySmall?.copyWith(
-                                      color: cs.onSurfaceVariant.withValues(
-                                        alpha: 0.6,
+                                const SizedBox(height: 28),
+                                TextFormField(
+                                  controller: _urlController,
+                                  keyboardType: TextInputType.url,
+                                  autocorrect: false,
+                                  enableSuggestions: false,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Server Address',
+                                    hintText: 'http://192.168.1.5:3000',
+                                    prefixIcon: Icon(Icons.dns_outlined),
+                                  ),
+                                  textInputAction: TextInputAction.done,
+                                  onFieldSubmitted: (_) => _connect(),
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty) {
+                                      return 'Server address is required';
+                                    }
+                                    final lower = v.trim().toLowerCase();
+                                    if (!lower.startsWith('http://') &&
+                                        !lower.startsWith('https://')) {
+                                      return 'Must start with '
+                                          'http:// or https://';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                if (_errorMessage != null) ...[
+                                  const SizedBox(height: 16),
+                                  _ErrorBanner(message: _errorMessage!),
+                                ],
+                                const SizedBox(height: 24),
+                                GradientButton(
+                                  onPressed: _isLoading ? null : _connect,
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            strokeCap: StrokeCap.round,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text('Connect'),
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline_rounded,
+                                      size: 15,
+                                      color: glass.muted2,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Contact your Mediqux administrator '
+                                        'for the server address.',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(color: glass.muted2),
                                       ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -274,7 +246,7 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: cs.errorContainer,
+        color: cs.error.withValues(alpha: 0.12),
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         border: Border.all(color: cs.error.withValues(alpha: 0.3)),
       ),
@@ -285,7 +257,7 @@ class _ErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: tt.bodySmall?.copyWith(color: cs.onErrorContainer),
+              style: tt.bodySmall?.copyWith(color: cs.error),
             ),
           ),
         ],

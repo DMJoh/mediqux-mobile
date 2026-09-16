@@ -11,6 +11,9 @@ import 'package:mediqux_mobile/providers/diagnostic_study_provider.dart';
 import 'package:mediqux_mobile/providers/doctor_provider.dart';
 import 'package:mediqux_mobile/providers/institution_provider.dart';
 import 'package:mediqux_mobile/providers/patient_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/form_section.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 
 const _kStudyTypes = [
   'X-Ray',
@@ -68,19 +71,36 @@ class _DiagnosticStudyFormScreenState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final patients = ref.read(patientsProvider).valueOrNull ?? [];
-      final doctors = ref.read(doctorsProvider).valueOrNull ?? [];
-      final institutions = ref.read(institutionsProvider).valueOrNull ?? [];
-      if (mounted) {
-        setState(() {
-          _patients = patients;
-          _doctors = doctors;
-          _institutions = institutions;
-          _loadingDropdowns = false;
-        });
-      }
-    });
+    final pA = ref.read(patientsProvider);
+    final dA = ref.read(doctorsProvider);
+    final iA = ref.read(institutionsProvider);
+    if (pA.hasValue &&
+        !pA.isLoading &&
+        dA.hasValue &&
+        !dA.isLoading &&
+        iA.hasValue &&
+        !iA.isLoading) {
+      _patients = pA.requireValue;
+      _doctors = dA.requireValue;
+      _institutions = iA.requireValue;
+      _loadingDropdowns = false;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final results = await Future.wait([
+          ref.read(patientsProvider.future),
+          ref.read(doctorsProvider.future),
+          ref.read(institutionsProvider.future),
+        ]);
+        if (mounted) {
+          setState(() {
+            _patients = results[0] as List<Patient>;
+            _doctors = results[1] as List<Doctor>;
+            _institutions = results[2] as List<Institution>;
+            _loadingDropdowns = false;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -209,7 +229,7 @@ class _DiagnosticStudyFormScreenState
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -234,39 +254,36 @@ class _DiagnosticStudyFormScreenState
       });
       if (!_initialized) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Edit Study'),
-            backgroundColor: cs.surface,
+          appBar: AppBar(title: const Text('Edit Study')),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
           ),
-          body: const Center(child: CircularProgressIndicator()),
         );
       }
     }
 
     return Scaffold(
-      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
         leading: _isEdit
-            ? BackButton(color: cs.onSurface, onPressed: () => context.pop())
-            : CloseButton(color: cs.onSurface, onPressed: () => context.pop()),
-        title: Text(
-          _isEdit ? 'Edit Study' : 'New Diagnostic Study',
-          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-        ),
+            ? BackButton(onPressed: () => context.pop())
+            : CloseButton(onPressed: () => context.pop()),
+        title: Text(_isEdit ? 'Edit Study' : 'New Diagnostic Study'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton(
+            padding: const EdgeInsets.only(right: 12),
+            child: GradientButton(
+              compact: true,
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: cs.primary,
+                        color: Colors.white,
                       ),
                     )
                   : const Text('Save'),
@@ -277,211 +294,244 @@ class _DiagnosticStudyFormScreenState
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_loadingDropdowns)
-                const Center(child: CircularProgressIndicator())
+                const Padding(
+                  padding: EdgeInsets.only(top: 48),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                )
               else ...[
-                // Patient dropdown
-                // ignore: deprecated_member_use
-                DropdownButtonFormField<String>(
-                  // Deprecated in favour of DropdownMenu.
-                  // ignore: deprecated_member_use
-                  value: _selectedPatientId,
-                  decoration: const InputDecoration(labelText: 'Patient *'),
-                  items: _patients
-                      .map(
-                        (p) => DropdownMenuItem(
-                          value: p.id,
-                          child: Text(p.fullName),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedPatientId = v),
-                  validator: (v) => v == null ? 'Patient is required' : null,
-                ),
-                const SizedBox(height: 12),
-                // Study type dropdown
-                // ignore: deprecated_member_use
-                DropdownButtonFormField<String>(
-                  // Deprecated in favour of DropdownMenu.
-                  // ignore: deprecated_member_use
-                  value: _selectedStudyType,
-                  decoration: const InputDecoration(labelText: 'Study Type *'),
-                  items: _kStudyTypes
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedStudyType = v),
-                  validator: (v) => v == null ? 'Study type is required' : null,
-                ),
-              ],
-              const SizedBox(height: 12),
-              // Date picker
-              GestureDetector(
-                onTap: _pickDate,
-                child: AbsorbPointer(
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Study Date *',
-                      hintText: 'Select date',
-                      suffixIcon: Icon(Icons.calendar_today_rounded),
-                    ),
-                    controller: TextEditingController(
-                      text: _selectedDate != null
-                          ? dateFmt.format(_selectedDate!)
-                          : '',
-                    ),
-                    validator: (_) =>
-                        _selectedDate == null ? 'Date is required' : null,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _bodyRegionCtrl,
-                decoration: const InputDecoration(labelText: 'Body Region'),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              if (!_loadingDropdowns) ...[
-                // Ordering physician dropdown
-                // ignore: deprecated_member_use
-                DropdownButtonFormField<String>(
-                  // Deprecated in favour of DropdownMenu.
-                  // ignore: deprecated_member_use
-                  value: _selectedOrderingPhysicianId,
-                  decoration: const InputDecoration(
-                    labelText: 'Ordering Physician',
-                  ),
-                  isExpanded: true,
-                  items: [
-                    const DropdownMenuItem(child: Text('None')),
-                    ..._doctors.map(
-                      (d) => DropdownMenuItem(
-                        value: d.id,
-                        child: Text(
-                          d.fullName,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ],
-                  onChanged: (v) =>
-                      setState(() => _selectedOrderingPhysicianId = v),
-                ),
-                const SizedBox(height: 12),
-                // Performing physician dropdown
-                // ignore: deprecated_member_use
-                DropdownButtonFormField<String>(
-                  // Deprecated in favour of DropdownMenu.
-                  // ignore: deprecated_member_use
-                  value: _selectedPerformingPhysicianId,
-                  decoration: const InputDecoration(
-                    labelText: 'Performing Physician',
-                  ),
-                  isExpanded: true,
-                  items: [
-                    const DropdownMenuItem(child: Text('None')),
-                    ..._doctors.map(
-                      (d) => DropdownMenuItem(
-                        value: d.id,
-                        child: Text(
-                          d.fullName,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ],
-                  onChanged: (v) =>
-                      setState(() => _selectedPerformingPhysicianId = v),
-                ),
-                const SizedBox(height: 12),
-                // Institution dropdown
-                // ignore: deprecated_member_use
-                DropdownButtonFormField<String>(
-                  // Deprecated in favour of DropdownMenu.
-                  // ignore: deprecated_member_use
-                  value: _selectedInstitutionId,
-                  decoration: const InputDecoration(labelText: 'Institution'),
-                  isExpanded: true,
-                  items: [
-                    const DropdownMenuItem(child: Text('None')),
-                    ..._institutions.map(
-                      (i) => DropdownMenuItem(
-                        value: i.id,
-                        child: Text(i.name, overflow: TextOverflow.ellipsis),
-                      ),
-                    ),
-                  ],
-                  onChanged: (v) => setState(() => _selectedInstitutionId = v),
-                ),
-                const SizedBox(height: 12),
-              ],
-              TextFormField(
-                controller: _indicationCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Clinical Indication',
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _findingsCtrl,
-                decoration: const InputDecoration(labelText: 'Findings'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _conclusionCtrl,
-                decoration: const InputDecoration(labelText: 'Conclusion'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notesCtrl,
-                decoration: const InputDecoration(labelText: 'Notes'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 20),
-              // File upload
-              OutlinedButton.icon(
-                onPressed: _pickFile,
-                icon: const Icon(Icons.upload_file_rounded),
-                label: const Text('Attach File (optional)'),
-              ),
-              if (_fileName != null) ...[
-                const SizedBox(height: 8),
-                Row(
+                FormSection(
+                  title: 'Details',
                   children: [
-                    Icon(
-                      Icons.attach_file_rounded,
-                      size: 18,
-                      color: cs.primary,
+                    // Patient dropdown
+                    // ignore: deprecated_member_use
+                    DropdownButtonFormField<String>(
+                      // Deprecated in favour of DropdownMenu.
+                      // ignore: deprecated_member_use
+                      value: _selectedPatientId,
+                      decoration: const InputDecoration(
+                        labelText: 'Patient *',
+                      ),
+                      items: _patients
+                          .map(
+                            (p) => DropdownMenuItem(
+                              value: p.id,
+                              child: Text(p.fullName),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _selectedPatientId = v),
+                      validator: (v) =>
+                          v == null ? 'Patient is required' : null,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _fileName!,
-                        style: tt.bodySmall?.copyWith(color: cs.primary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    // Study type dropdown
+                    // ignore: deprecated_member_use
+                    DropdownButtonFormField<String>(
+                      // Deprecated in favour of DropdownMenu.
+                      // ignore: deprecated_member_use
+                      value: _selectedStudyType,
+                      decoration: const InputDecoration(
+                        labelText: 'Study Type *',
+                      ),
+                      items: _kStudyTypes
+                          .map(
+                            (t) => DropdownMenuItem(value: t, child: Text(t)),
+                          )
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _selectedStudyType = v),
+                      validator: (v) =>
+                          v == null ? 'Study type is required' : null,
+                    ),
+                    // Date picker
+                    GestureDetector(
+                      onTap: _pickDate,
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          decoration: const InputDecoration(
+                            labelText: 'Study Date *',
+                            hintText: 'Select date',
+                            suffixIcon: Icon(Icons.calendar_today_outlined),
+                          ),
+                          controller: TextEditingController(
+                            text: _selectedDate != null
+                                ? dateFmt.format(_selectedDate!)
+                                : '',
+                          ),
+                          validator: (_) => _selectedDate == null
+                              ? 'Date is required'
+                              : null,
+                        ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 16),
-                      onPressed: () => setState(() {
-                        _filePath = null;
-                        _fileName = null;
-                      }),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    TextFormField(
+                      controller: _bodyRegionCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Body Region',
+                      ),
+                      textCapitalization: TextCapitalization.words,
+                    ),
+                    // Ordering physician dropdown
+                    // ignore: deprecated_member_use
+                    DropdownButtonFormField<String>(
+                      // Deprecated in favour of DropdownMenu.
+                      // ignore: deprecated_member_use
+                      value: _selectedOrderingPhysicianId,
+                      decoration: const InputDecoration(
+                        labelText: 'Ordering Physician',
+                      ),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem(child: Text('None')),
+                        ..._doctors.map(
+                          (d) => DropdownMenuItem(
+                            value: d.id,
+                            child: Text(
+                              d.fullName,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => _selectedOrderingPhysicianId = v),
+                    ),
+                    // Performing physician dropdown
+                    // ignore: deprecated_member_use
+                    DropdownButtonFormField<String>(
+                      // Deprecated in favour of DropdownMenu.
+                      // ignore: deprecated_member_use
+                      value: _selectedPerformingPhysicianId,
+                      decoration: const InputDecoration(
+                        labelText: 'Performing Physician',
+                      ),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem(child: Text('None')),
+                        ..._doctors.map(
+                          (d) => DropdownMenuItem(
+                            value: d.id,
+                            child: Text(
+                              d.fullName,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => _selectedPerformingPhysicianId = v),
+                    ),
+                    // Institution dropdown
+                    // ignore: deprecated_member_use
+                    DropdownButtonFormField<String>(
+                      // Deprecated in favour of DropdownMenu.
+                      // ignore: deprecated_member_use
+                      value: _selectedInstitutionId,
+                      decoration: const InputDecoration(
+                        labelText: 'Institution',
+                      ),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem(child: Text('None')),
+                        ..._institutions.map(
+                          (i) => DropdownMenuItem(
+                            value: i.id,
+                            child: Text(
+                              i.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => _selectedInstitutionId = v),
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                FormSection(
+                  title: 'Clinical Info',
+                  children: [
+                    TextFormField(
+                      controller: _indicationCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Clinical Indication',
+                      ),
+                      maxLines: 2,
+                    ),
+                    TextFormField(
+                      controller: _findingsCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Findings',
+                      ),
+                      maxLines: 3,
+                    ),
+                    TextFormField(
+                      controller: _conclusionCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Conclusion',
+                      ),
+                      maxLines: 2,
+                    ),
+                    TextFormField(
+                      controller: _notesCtrl,
+                      decoration: const InputDecoration(labelText: 'Notes'),
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                FormSection(
+                  title: 'Attachment',
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _pickFile,
+                      icon: const Icon(Icons.upload_file_outlined),
+                      label: const Text('Attach File (optional)'),
+                    ),
+                    if (_fileName != null)
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.attach_file_outlined,
+                            size: 18,
+                            color: cs.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _fileName!,
+                              style: tt.bodySmall?.copyWith(
+                                color: cs.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 16),
+                            onPressed: () => setState(() {
+                              _filePath = null;
+                              _fileName = null;
+                            }),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ],
-              const SizedBox(height: 32),
             ],
           ),
         ),

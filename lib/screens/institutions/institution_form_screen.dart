@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/institution/institution.dart';
 import 'package:mediqux_mobile/models/institution/institution_request.dart';
 import 'package:mediqux_mobile/providers/institution_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/form_section.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 
 const _kTypes = [
   'Hospital',
@@ -88,7 +91,7 @@ class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -97,8 +100,6 @@ class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     if (_isEdit && !_initialized) {
       ref.watch(institutionDetailProvider(widget.institutionId!)).whenData((
         inst,
@@ -111,39 +112,36 @@ class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
       });
       if (!_initialized) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Edit Institution'),
-            backgroundColor: cs.surface,
+          appBar: AppBar(title: const Text('Edit Institution')),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
           ),
-          body: const Center(child: CircularProgressIndicator()),
         );
       }
     }
 
     return Scaffold(
-      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
         leading: _isEdit
-            ? BackButton(color: cs.onSurface, onPressed: () => context.pop())
-            : CloseButton(color: cs.onSurface, onPressed: () => context.pop()),
-        title: Text(
-          _isEdit ? 'Edit Institution' : 'Add Institution',
-          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-        ),
+            ? BackButton(onPressed: () => context.pop())
+            : CloseButton(onPressed: () => context.pop()),
+        title: Text(_isEdit ? 'Edit Institution' : 'Add Institution'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton(
+            padding: const EdgeInsets.only(right: 12),
+            child: GradientButton(
+              compact: true,
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: cs.primary,
+                        color: Colors.white,
                       ),
                     )
                   : const Text('Save'),
@@ -154,91 +152,100 @@ class _InstitutionFormScreenState extends ConsumerState<InstitutionFormScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Institution Name *',
-                ),
-                textCapitalization: TextCapitalization.words,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Name is required';
-                  }
-                  return null;
-                },
+              FormSection(
+                title: 'Details',
+                children: [
+                  TextFormField(
+                    controller: _nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Institution Name *',
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Name is required';
+                      }
+                      return null;
+                    },
+                  ),
+                  DropdownButtonFormField<String>(
+                    // value updates display on every rebuild;
+                    // initialValue only sets once, breaking edit pre-fill.
+                    // ignore: deprecated_member_use
+                    value: _selectedType,
+                    decoration: const InputDecoration(labelText: 'Type'),
+                    items: _kTypes
+                        .map(
+                          (t) => DropdownMenuItem(value: t, child: Text(t)),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedType = v),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                // value updates display on every rebuild;
-                // initialValue only sets once, breaking edit pre-fill.
-                // ignore: deprecated_member_use
-                value: _selectedType,
-                decoration: const InputDecoration(labelText: 'Type'),
-                items: _kTypes
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedType = v),
+              const SizedBox(height: 16),
+              FormSection(
+                title: 'Contact',
+                children: [
+                  TextFormField(
+                    controller: _phoneCtrl,
+                    decoration: const InputDecoration(labelText: 'Phone'),
+                    keyboardType: TextInputType.phone,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return null;
+                      }
+                      if (!RegExp(r'^[0-9+\s\-]+$').hasMatch(v.trim())) {
+                        return 'Invalid phone number';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _emailCtrl,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return null;
+                      }
+                      if (!RegExp(
+                        r'^[^@]+@[^@]+\.[^@]+$',
+                      ).hasMatch(v.trim())) {
+                        return 'Invalid email address';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _websiteCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Website',
+                      hintText: 'https://example.com',
+                    ),
+                    keyboardType: TextInputType.url,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return null;
+                      }
+                      if (!RegExp('^https?://.+').hasMatch(v.trim())) {
+                        return 'Must start with http:// or https://';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _addressCtrl,
+                    decoration: const InputDecoration(labelText: 'Address'),
+                    maxLines: 3,
+                    keyboardType: TextInputType.multiline,
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phoneCtrl,
-                decoration: const InputDecoration(labelText: 'Phone'),
-                keyboardType: TextInputType.phone,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return null;
-                  }
-                  if (!RegExp(r'^[0-9+\s\-]+$').hasMatch(v.trim())) {
-                    return 'Invalid phone number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return null;
-                  }
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
-                    return 'Invalid email address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _websiteCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Website',
-                  hintText: 'https://example.com',
-                ),
-                keyboardType: TextInputType.url,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return null;
-                  }
-                  if (!RegExp('^https?://.+').hasMatch(v.trim())) {
-                    return 'Must start with http:// or https://';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _addressCtrl,
-                decoration: const InputDecoration(labelText: 'Address'),
-                maxLines: 3,
-                keyboardType: TextInputType.multiline,
-              ),
-              const SizedBox(height: 32),
             ],
           ),
         ),

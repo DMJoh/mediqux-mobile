@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/doctor/doctor.dart';
 import 'package:mediqux_mobile/models/doctor/doctor_request.dart';
 import 'package:mediqux_mobile/providers/doctor_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/form_section.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 
 class DoctorFormScreen extends ConsumerStatefulWidget {
   const DoctorFormScreen({super.key, this.doctorId});
@@ -82,7 +85,7 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -104,11 +107,13 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
       });
       if (!_initialized) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Edit Doctor'),
-            backgroundColor: cs.surface,
+          appBar: AppBar(title: const Text('Edit Doctor')),
+          body: const Center(
+            child: CircularProgressIndicator(
+              strokeCap: StrokeCap.round,
+              strokeWidth: 3,
+            ),
           ),
-          body: const Center(child: CircularProgressIndicator()),
         );
       }
     }
@@ -116,29 +121,24 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
     final availableAsync = ref.watch(availableInstitutionsProvider);
 
     return Scaffold(
-      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
         leading: _isEdit
-            ? BackButton(color: cs.onSurface, onPressed: () => context.pop())
-            : CloseButton(color: cs.onSurface, onPressed: () => context.pop()),
-        title: Text(
-          _isEdit ? 'Edit Doctor' : 'Add Doctor',
-          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-        ),
+            ? BackButton(onPressed: () => context.pop())
+            : CloseButton(onPressed: () => context.pop()),
+        title: Text(_isEdit ? 'Edit Doctor' : 'Add Doctor'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton(
+            padding: const EdgeInsets.only(right: 12),
+            child: GradientButton(
+              compact: true,
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: cs.primary,
+                        color: Colors.white,
                       ),
                     )
                   : const Text('Save'),
@@ -149,126 +149,143 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _firstNameCtrl,
-                decoration: const InputDecoration(labelText: 'First Name *'),
-                textCapitalization: TextCapitalization.words,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'First name is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _lastNameCtrl,
-                decoration: const InputDecoration(labelText: 'Last Name *'),
-                textCapitalization: TextCapitalization.words,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Last name is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _specialtyCtrl,
-                decoration: const InputDecoration(labelText: 'Specialty'),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _licenseCtrl,
-                decoration: const InputDecoration(labelText: 'License Number'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phoneCtrl,
-                decoration: const InputDecoration(labelText: 'Phone'),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return null;
-                  }
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
-                    return 'Invalid email address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Institutions',
-                style: tt.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: cs.primary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              availableAsync.when(
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-                error: (e, _) => Text(
-                  'Could not load institutions: $e',
-                  style: TextStyle(color: cs.error),
-                ),
-                data: (institutions) {
-                  if (institutions.isEmpty) {
-                    return Text(
-                      'No institutions available.',
-                      style: TextStyle(color: cs.onSurfaceVariant),
-                    );
-                  }
-                  return Card(
-                    margin: EdgeInsets.zero,
-                    child: Column(
-                      children: institutions.map((inst) {
-                        final id = inst['id'] ?? '';
-                        final name = inst['name'] ?? '';
-                        final type = inst['type'] ?? '';
-                        return CheckboxListTile(
-                          value: _selectedInstitutionIds.contains(id),
-                          onChanged: (checked) {
-                            setState(() {
-                              if (checked ?? false) {
-                                _selectedInstitutionIds.add(id);
-                              } else {
-                                _selectedInstitutionIds.remove(id);
-                              }
-                            });
-                          },
-                          title: Text(
-                            name,
-                            style: tt.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          subtitle: type.isNotEmpty ? Text(type) : null,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          dense: true,
-                        );
-                      }).toList(),
+              FormSection(
+                title: 'Personal',
+                children: [
+                  TextFormField(
+                    controller: _firstNameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'First Name *',
                     ),
-                  );
-                },
+                    textCapitalization: TextCapitalization.words,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'First name is required';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _lastNameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Last Name *',
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Last name is required';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+              FormSection(
+                title: 'Professional',
+                children: [
+                  TextFormField(
+                    controller: _specialtyCtrl,
+                    decoration: const InputDecoration(labelText: 'Specialty'),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  TextFormField(
+                    controller: _licenseCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'License Number',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              FormSection(
+                title: 'Contact',
+                children: [
+                  TextFormField(
+                    controller: _phoneCtrl,
+                    decoration: const InputDecoration(labelText: 'Phone'),
+                    keyboardType: TextInputType.phone,
+                  ),
+                  TextFormField(
+                    controller: _emailCtrl,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return null;
+                      }
+                      if (!RegExp(
+                        r'^[^@]+@[^@]+\.[^@]+$',
+                      ).hasMatch(v.trim())) {
+                        return 'Invalid email address';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              FormSection(
+                title: 'Institutions',
+                children: [
+                  availableAsync.when(
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: CircularProgressIndicator(
+                          strokeCap: StrokeCap.round,
+                          strokeWidth: 3,
+                        ),
+                      ),
+                    ),
+                    error: (e, _) => Text(
+                      'Could not load institutions: $e',
+                      style: TextStyle(color: cs.error),
+                    ),
+                    data: (institutions) {
+                      if (institutions.isEmpty) {
+                        return Text(
+                          'No institutions available.',
+                          style: TextStyle(color: cs.onSurfaceVariant),
+                        );
+                      }
+                      return Column(
+                        children: institutions.map((inst) {
+                          final id = inst['id'] ?? '';
+                          final name = inst['name'] ?? '';
+                          final type = inst['type'] ?? '';
+                          return CheckboxListTile(
+                            value: _selectedInstitutionIds.contains(id),
+                            onChanged: (checked) {
+                              setState(() {
+                                if (checked ?? false) {
+                                  _selectedInstitutionIds.add(id);
+                                } else {
+                                  _selectedInstitutionIds.remove(id);
+                                }
+                              });
+                            },
+                            title: Text(
+                              name,
+                              style: tt.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: type.isNotEmpty ? Text(type) : null,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
         ),

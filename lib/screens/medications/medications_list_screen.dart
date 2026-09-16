@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/medication/medication.dart';
 import 'package:mediqux_mobile/providers/medication_provider.dart';
-import 'package:mediqux_mobile/widgets/app_drawer.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/empty_state_view.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
+import 'package:mediqux_mobile/widgets/status_badge.dart';
 
 class MedicationsListScreen extends ConsumerStatefulWidget {
   const MedicationsListScreen({super.key});
@@ -14,7 +19,6 @@ class MedicationsListScreen extends ConsumerStatefulWidget {
 }
 
 class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
-  bool _isSearching = false;
   final _searchCtrl = TextEditingController();
 
   @override
@@ -35,108 +39,97 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
     final medicationsAsync = ref.watch(medicationsProvider);
 
     return Scaffold(
-      backgroundColor: cs.surface,
-      drawer: const AppDrawer(currentRoute: '/medications'),
-      appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
-        leading: _isSearching
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => setState(() {
-                  _isSearching = false;
-                  _searchCtrl.clear();
-                }),
-              )
-            : Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.menu_rounded),
-                  onPressed: () => Scaffold.of(ctx).openDrawer(),
-                ),
-              ),
-        centerTitle: true,
-        title: _isSearching
-            ? TextField(
-                controller: _searchCtrl,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Search medications...',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                onChanged: (_) => setState(() {}),
-              )
-            : Text(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Text(
                 'Medications',
-                style: TextStyle(
-                  color: cs.onSurface,
-                  fontWeight: FontWeight.w700,
+                style: theme.textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
                 ),
               ),
-        actions: [
-          if (_isSearching)
-            IconButton(
-              icon: const Icon(Icons.clear_rounded),
-              onPressed: () {
-                if (_searchCtrl.text.isEmpty) {
-                  setState(() => _isSearching = false);
-                } else {
-                  setState(_searchCtrl.clear);
-                }
-              },
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.search_rounded),
-              onPressed: () => setState(() => _isSearching = true),
             ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(medicationsProvider.notifier).refresh(),
-        color: cs.primary,
-        child: medicationsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: _ErrorState(
-                  message: e.toString(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: SearchBar(
+                controller: _searchCtrl,
+                hintText: 'Search medications…',
+                leading: const Icon(Icons.search_rounded),
+                trailing: [
+                  ValueListenableBuilder(
+                    valueListenable: _searchCtrl,
+                    builder: (_, val, __) => val.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: medicationsAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(
+                    strokeCap: StrokeCap.round,
+                    strokeWidth: 3,
+                  ),
+                ),
+                error: (e, _) => _ErrorState(
+                  message: friendlyError(e),
                   onRetry: () =>
                       ref.read(medicationsProvider.notifier).refresh(),
                 ),
+                data: (list) {
+                  final filtered = _applySearch(list);
+                  if (filtered.isEmpty) {
+                    return EmptyStateView(
+                      icon: Icons.medication_outlined,
+                      title: _searchCtrl.text.isNotEmpty
+                          ? 'No medications match your search'
+                          : 'No medications yet',
+                      action: _searchCtrl.text.isEmpty
+                          ? GradientButton(
+                              onPressed: () => context.push('/medications/new'),
+                              icon: const Icon(Icons.add_rounded),
+                              child: const Text('Add medication'),
+                            )
+                          : null,
+                    );
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () =>
+                        ref.read(medicationsProvider.notifier).refresh(),
+                    color: glass.gradientStart,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) =>
+                          _MedicationCard(medication: filtered[i]),
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-          data: (list) {
-            final filtered = _applySearch(list);
-            if (filtered.isEmpty) {
-              return LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: _EmptyState(hasSearch: _searchCtrl.text.isNotEmpty),
-                  ),
-                ),
-              );
-            }
-            return ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-              itemCount: filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) => _MedicationCard(medication: filtered[i]),
-            );
-          },
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -155,160 +148,88 @@ class _MedicationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
 
     final showGenericName =
         medication.genericName != null &&
         medication.genericName != medication.name;
 
-    return Card(
-      child: InkWell(
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        onTap: () => context.push('/medications/${medication.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: cs.tertiaryContainer,
-                  borderRadius: const BorderRadius.all(Radius.circular(14)),
-                ),
-                child: Icon(
-                  Icons.medication_rounded,
-                  color: cs.onTertiaryContainer,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      medication.name,
-                      style: tt.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (showGenericName) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        medication.genericName!,
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    if (medication.manufacturer != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        medication.manufacturer!,
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    if (medication.dosageForms.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: medication.dosageForms
-                            .take(3)
-                            .map(
-                              (f) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: cs.primaryContainer,
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(8),
-                                  ),
-                                ),
-                                child: Text(
-                                  f,
-                                  style: tt.labelSmall?.copyWith(
-                                    color: cs.onPrimaryContainer,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
-            ],
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      onTap: () => context.push('/medications/${medication.id}'),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: glass.accentGradient,
+              borderRadius: const BorderRadius.all(Radius.circular(14)),
+            ),
+            child: const Icon(
+              Icons.medication_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.hasSearch});
-
-  final bool hasSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(48),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: cs.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.medication_rounded,
-                size: 40,
-                color: cs.onPrimaryContainer,
-              ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  medication.name,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (showGenericName) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    medication.genericName!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: glass.muted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (medication.manufacturer != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    medication.manufacturer!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: glass.muted2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (medication.dosageForms.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: medication.dosageForms
+                        .take(3)
+                        .map(
+                          (f) => StatusBadge.tone(
+                            context,
+                            label: f,
+                            tone: StatusTone.neutral,
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              hasSearch
-                  ? 'No medications match your search'
-                  : 'No medications yet',
-              style: tt.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: cs.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (!hasSearch)
-              FilledButton.icon(
-                onPressed: () => context.push('/medications/new'),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Add medication'),
-              ),
-          ],
-        ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: glass.muted2),
+        ],
       ),
     );
   }
@@ -322,29 +243,14 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load medications',
-              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
+        child: EmptyStateView(
+          icon: Icons.error_outline_rounded,
+          title: 'Failed to load medications',
+          description: message,
+          action: FilledButton(onPressed: onRetry, child: const Text('Retry')),
         ),
       ),
     );

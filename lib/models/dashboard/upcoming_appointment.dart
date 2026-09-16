@@ -8,8 +8,8 @@ class UpcomingAppointment extends Equatable {
   const UpcomingAppointment({
     required this.id,
     required this.appointmentDate,
-    required this.type,
-    required this.status,
+    this.type,
+    this.status,
     this.patientFirstName,
     this.patientLastName,
     this.doctorFirstName,
@@ -24,8 +24,8 @@ class UpcomingAppointment extends Equatable {
   @JsonKey(name: 'appointment_date')
   final DateTime appointmentDate;
 
-  final String type;
-  final String status;
+  final String? type;
+  final String? status;
 
   @JsonKey(name: 'patient_first_name')
   final String? patientFirstName;

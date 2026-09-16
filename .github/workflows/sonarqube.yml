@@ -33,13 +33,21 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage
 
+      - name: Cache SonarQube scanner plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: sonar-${{ runner.os }}-plugins
+          restore-keys: sonar-${{ runner.os }}-plugins
+
       - name: Get version
+        id: version
         run: |
           DATE=$(date +'%Y.%m.%d')
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "VERSION=${DATE}.${{ github.run_number }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+            echo "value=${DATE}.${{ github.run_number }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
           else
-            echo "VERSION=${DATE}.${{ github.run_number }}" >> $GITHUB_ENV
+            echo "value=${DATE}.${{ github.run_number }}" >> $GITHUB_OUTPUT
           fi
 
       - name: SonarQube Scan
@@ -47,4 +55,4 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_SCANNER_OPTS: "-Dsonar.projectVersion=${{ env.VERSION }}"
+          SONAR_SCANNER_OPTS: "-Dsonar.projectVersion=${{ steps.version.outputs.value }}"

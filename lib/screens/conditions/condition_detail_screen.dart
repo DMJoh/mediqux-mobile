@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/condition/condition.dart';
 import 'package:mediqux_mobile/providers/condition_provider.dart';
+import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/glass_app_header.dart';
+import 'package:mediqux_mobile/widgets/info_section.dart';
+import 'package:mediqux_mobile/widgets/status_badge.dart';
 
-Color _severityColor(String? severity) {
+StatusTone _severityTone(String? severity) {
   switch (severity?.toLowerCase()) {
     case 'low':
-      return const Color(0xFF43A047);
+      return StatusTone.positive;
     case 'medium':
-      return const Color(0xFFFF7043);
+      return StatusTone.warning;
     case 'high':
-      return const Color(0xFFEF5350);
+      return StatusTone.critical;
     default:
-      return const Color(0xFF607D8B);
+      return StatusTone.neutral;
   }
 }
 
@@ -59,7 +62,7 @@ class ConditionDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     }
   }
@@ -67,20 +70,23 @@ class ConditionDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final conditionAsync = ref.watch(conditionDetailProvider(conditionId));
 
     return Scaffold(
-      backgroundColor: cs.surface,
       body: conditionAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeCap: StrokeCap.round,
+            strokeWidth: 3,
+          ),
+        ),
         error: (e, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
               const SizedBox(height: 16),
-              Text(e.toString()),
+              Text(friendlyError(e)),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => context.pop(),
@@ -90,228 +96,92 @@ class ConditionDetailScreen extends ConsumerWidget {
           ),
         ),
         data: (condition) {
-          final severityColor = _severityColor(condition.severity);
+          final chips = [
+            if (condition.category != null) condition.category!,
+          ];
           return CustomScrollView(
             slivers: [
-              SliverAppBar(
-                expandedHeight: 180,
-                pinned: true,
-                leading: BackButton(
-                  color: Colors.white,
-                  onPressed: () => context.pop(),
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_rounded, color: Colors.white),
-                    tooltip: 'Edit',
-                    onPressed: () =>
-                        context.push('/conditions/${condition.id}/edit'),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.more_vert_rounded,
-                      color: Colors.white,
+              SliverToBoxAdapter(
+                child: GlassAppHeader(
+                  title: condition.name,
+                  chips: chips,
+                  onBack: () => context.pop(),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Edit',
+                      onPressed: () =>
+                          context.push('/conditions/${condition.id}/edit'),
                     ),
-                    onSelected: (v) {
-                      if (v == 'delete') {
-                        _confirmDelete(context, ref, condition);
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_rounded,
-                              color: cs.error,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: cs.error)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  titlePadding: const EdgeInsets.only(
-                    left: 56,
-                    right: 56,
-                    bottom: 16,
-                  ),
-                  title: Text(
-                    condition.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: AppTheme.headerGradient,
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(20),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert_rounded),
+                      onSelected: (v) {
+                        if (v == 'delete') {
+                          _confirmDelete(context, ref, condition);
+                        }
+                      },
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline_rounded,
+                                color: cs.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text('Delete', style: TextStyle(color: cs.error)),
+                            ],
                           ),
                         ),
-                        child: const Icon(
-                          Icons.healing_rounded,
-                          color: Colors.white,
-                          size: 36,
-                        ),
-                      ),
+                      ],
                     ),
-                  ),
+                  ],
                 ),
               ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          if (condition.category != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cs.secondaryContainer,
-                                borderRadius: const BorderRadius.all(
-                                  Radius.circular(20),
-                                ),
-                              ),
-                              child: Text(
-                                condition.category!,
-                                style: tt.labelMedium?.copyWith(
-                                  color: cs.onSecondaryContainer,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          if (condition.category != null &&
-                              condition.severity != null)
-                            const SizedBox(width: 8),
-                          if (condition.severity != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: severityColor.withValues(alpha: 0.12),
-                                borderRadius: const BorderRadius.all(
-                                  Radius.circular(20),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: severityColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    condition.severity!,
-                                    style: tt.labelMedium?.copyWith(
-                                      color: severityColor,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: cs.surfaceContainerLow,
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(16),
+                      if (condition.severity != null)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: StatusBadge.tone(
+                            context,
+                            label: condition.severity!,
+                            tone: _severityTone(condition.severity),
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Details',
-                              style: tt.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: cs.primary,
-                              ),
+                      if (condition.severity != null)
+                        const SizedBox(height: 12),
+                      InfoSection(
+                        title: 'Details',
+                        rows: [
+                          if (condition.icdCode != null)
+                            InfoRow(
+                              label: 'ICD Code',
+                              value: condition.icdCode!,
                             ),
-                            const SizedBox(height: 12),
-                            if (condition.icdCode != null)
-                              _InfoRow(
-                                icon: Icons.tag_rounded,
-                                label: 'ICD Code',
-                                value: condition.icdCode!,
-                              ),
-                            _InfoRow(
-                              icon: Icons.bar_chart_rounded,
-                              label: 'Usage',
-                              value:
-                                  '${condition.usageCount} patient'
-                                  '${condition.usageCount != 1 ? 's' : ''}',
-                            ),
-                          ],
-                        ),
+                          InfoRow(
+                            label: 'Usage',
+                            value:
+                                '${condition.usageCount} patient'
+                                '${condition.usageCount != 1 ? 's' : ''}',
+                          ),
+                        ],
                       ),
                       if (condition.description != null) ...[
                         const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: cs.surfaceContainerLow,
-                            borderRadius: const BorderRadius.all(
-                              Radius.circular(16),
+                        InfoSection(
+                          title: 'Description',
+                          rows: [
+                            InfoRow(
+                              label: 'Description',
+                              value: condition.description!,
                             ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Description',
-                                style: tt.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: cs.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                condition.description!,
-                                style: tt.bodySmall?.copyWith(
-                                  color: cs.onSurface,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
                       ],
                       const SizedBox(height: 32),
@@ -322,53 +192,6 @@ class ConditionDetailScreen extends ConsumerWidget {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: cs.onSurfaceVariant),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 70,
-            child: Text(
-              label,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
