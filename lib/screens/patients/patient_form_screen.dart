@@ -6,6 +6,8 @@ import 'package:mediqux_mobile/models/patient/patient.dart';
 import 'package:mediqux_mobile/models/patient/patient_request.dart';
 import 'package:mediqux_mobile/providers/patient_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/form_section.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 
 class PatientFormScreen extends ConsumerStatefulWidget {
   const PatientFormScreen({super.key, this.patientId});
@@ -145,10 +147,7 @@ class _PatientFormScreenState extends ConsumerState<PatientFormScreen> {
       });
       if (!_initialized) {
         return Scaffold(
-          appBar: AppBar(
-            title: Text(isEdit ? 'Edit Patient' : 'Add Patient'),
-            backgroundColor: cs.surface,
-          ),
+          appBar: AppBar(title: Text(isEdit ? 'Edit Patient' : 'Add Patient')),
           body: const Center(
             child: CircularProgressIndicator(
               strokeCap: StrokeCap.round,
@@ -160,29 +159,24 @@ class _PatientFormScreenState extends ConsumerState<PatientFormScreen> {
     }
 
     return Scaffold(
-      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
         leading: isEdit
-            ? BackButton(color: cs.onSurface, onPressed: () => context.pop())
-            : CloseButton(color: cs.onSurface, onPressed: () => context.pop()),
-        title: Text(
-          isEdit ? 'Edit Patient' : 'Add Patient',
-          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-        ),
+            ? BackButton(onPressed: () => context.pop())
+            : CloseButton(onPressed: () => context.pop()),
+        title: Text(isEdit ? 'Edit Patient' : 'Add Patient'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton(
+            padding: const EdgeInsets.only(right: 12),
+            child: GradientButton(
+              compact: true,
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: cs.primary,
+                        color: Colors.white,
                       ),
                     )
                   : const Text('Save'),
@@ -193,148 +187,166 @@ class _PatientFormScreenState extends ConsumerState<PatientFormScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
+              FormSection(
+                title: 'Personal',
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _firstNameCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'First Name *',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _firstNameCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'First Name *',
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Required';
+                            }
+                            return null;
+                          },
+                        ),
                       ),
-                      textCapitalization: TextCapitalization.words,
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Required';
-                        }
-                        return null;
-                      },
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _lastNameCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Last Name *',
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Required';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _lastNameCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Last Name *',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _dobCtrl,
+                          decoration: InputDecoration(
+                            labelText: 'Date of Birth',
+                            suffixIcon: Icon(
+                              Icons.calendar_today_outlined,
+                              color: cs.primary,
+                              size: 20,
+                            ),
+                          ),
+                          readOnly: true,
+                          onTap: _pickDate,
+                        ),
                       ),
-                      textCapitalization: TextCapitalization.words,
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Required';
-                        }
-                        return null;
-                      },
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          // value updates display on every rebuild;
+                          // initialValue only sets once, breaking edit
+                          // pre-fill.
+                          // ignore: deprecated_member_use
+                          value: _selectedGender,
+                          decoration: const InputDecoration(
+                            labelText: 'Gender',
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Male',
+                              child: Text('Male'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Female',
+                              child: Text('Female'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Other',
+                              child: Text('Other'),
+                            ),
+                          ],
+                          onChanged: (v) =>
+                              setState(() => _selectedGender = v),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Row(
+              const SizedBox(height: 16),
+              FormSection(
+                title: 'Contact',
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _dobCtrl,
-                      decoration: InputDecoration(
-                        labelText: 'Date of Birth',
-                        suffixIcon: Icon(
-                          Icons.calendar_today_rounded,
-                          color: cs.primary,
-                          size: 20,
-                        ),
-                      ),
-                      readOnly: true,
-                      onTap: _pickDate,
-                    ),
+                  TextFormField(
+                    controller: _phoneCtrl,
+                    decoration: const InputDecoration(labelText: 'Phone'),
+                    keyboardType: TextInputType.phone,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return null;
+                      }
+                      final clean = v.trim();
+                      final valid = RegExp(r'^[0-9+\s\-]+$').hasMatch(clean);
+                      return valid ? null : 'Invalid phone number';
+                    },
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      // value updates display on every rebuild;
-                      // initialValue only sets once, breaking edit pre-fill.
-                      // ignore: deprecated_member_use
-                      value: _selectedGender,
-                      decoration: const InputDecoration(labelText: 'Gender'),
-                      items: const [
-                        DropdownMenuItem(value: 'Male', child: Text('Male')),
-                        DropdownMenuItem(
-                          value: 'Female',
-                          child: Text('Female'),
-                        ),
-                        DropdownMenuItem(value: 'Other', child: Text('Other')),
-                      ],
-                      onChanged: (v) => setState(() => _selectedGender = v),
-                    ),
+                  TextFormField(
+                    controller: _emailCtrl,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return null;
+                      }
+                      final valid = RegExp(
+                        r'^[^@]+@[^@]+\.[^@]+$',
+                      ).hasMatch(v.trim());
+                      return valid ? null : 'Invalid email address';
+                    },
+                  ),
+                  TextFormField(
+                    controller: _addressCtrl,
+                    decoration: const InputDecoration(labelText: 'Address'),
+                    maxLines: 3,
+                    keyboardType: TextInputType.multiline,
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phoneCtrl,
-                decoration: const InputDecoration(labelText: 'Phone'),
-                keyboardType: TextInputType.phone,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return null;
-                  }
-                  final clean = v.trim();
-                  final valid = RegExp(r'^[0-9+\s\-]+$').hasMatch(clean);
-                  return valid ? null : 'Invalid phone number';
-                },
+              const SizedBox(height: 16),
+              FormSection(
+                title: 'Emergency Contact',
+                children: [
+                  TextFormField(
+                    controller: _emergencyNameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Contact Name',
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  TextFormField(
+                    controller: _emergencyPhoneCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Contact Phone',
+                    ),
+                    keyboardType: TextInputType.phone,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return null;
+                      }
+                      final valid = RegExp(
+                        r'^[0-9+\s\-]+$',
+                      ).hasMatch(v.trim());
+                      return valid ? null : 'Invalid phone number';
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return null;
-                  }
-                  final valid = RegExp(
-                    r'^[^@]+@[^@]+\.[^@]+$',
-                  ).hasMatch(v.trim());
-                  return valid ? null : 'Invalid email address';
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _addressCtrl,
-                decoration: const InputDecoration(labelText: 'Address'),
-                maxLines: 3,
-                keyboardType: TextInputType.multiline,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Emergency Contact',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: cs.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _emergencyNameCtrl,
-                decoration: const InputDecoration(labelText: 'Contact Name'),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _emergencyPhoneCtrl,
-                decoration: const InputDecoration(labelText: 'Contact Phone'),
-                keyboardType: TextInputType.phone,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return null;
-                  }
-                  final valid = RegExp(r'^[0-9+\s\-]+$').hasMatch(v.trim());
-                  return valid ? null : 'Invalid phone number';
-                },
-              ),
-              const SizedBox(height: 32),
             ],
           ),
         ),

@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/lab_report/lab_report.dart';
 import 'package:mediqux_mobile/providers/dio_provider.dart';
 import 'package:mediqux_mobile/providers/lab_report_provider.dart';
 import 'package:mediqux_mobile/providers/server_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
-import 'package:mediqux_mobile/widgets/detail_hero.dart';
+import 'package:mediqux_mobile/widgets/glass_app_header.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/info_section.dart';
+import 'package:mediqux_mobile/widgets/status_badge.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -78,7 +82,6 @@ class LabReportDetailScreen extends ConsumerWidget {
     final reportAsync = ref.watch(labReportDetailProvider(reportId));
 
     return Scaffold(
-      backgroundColor: cs.surface,
       body: reportAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(
@@ -106,18 +109,18 @@ class LabReportDetailScreen extends ConsumerWidget {
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: DetailHero(
+                child: GlassAppHeader(
                   title: report.testName,
                   onBack: () => context.pop(),
                   actions: [
                     IconButton(
-                      icon: const Icon(Icons.edit_rounded),
+                      icon: const Icon(Icons.edit_outlined),
                       tooltip: 'Edit',
                       onPressed: () =>
                           context.push('/lab-reports/${report.id}/edit'),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete_rounded),
+                      icon: const Icon(Icons.delete_outline_rounded),
                       tooltip: 'Delete',
                       onPressed: () => _confirmDelete(context, ref, report),
                     ),
@@ -130,37 +133,24 @@ class LabReportDetailScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       // Patient
-                      _InfoSection(
+                      InfoSection(
                         title: 'Patient',
                         rows: [
-                          _InfoRow(
-                            icon: Icons.person_rounded,
-                            label: 'Name',
-                            value: report.patientName,
-                          ),
+                          InfoRow(label: 'Name', value: report.patientName),
                         ],
                       ),
                       const SizedBox(height: 12),
                       // Test info
-                      _InfoSection(
+                      InfoSection(
                         title: 'Test Info',
                         rows: [
-                          _InfoRow(
-                            icon: Icons.science_rounded,
-                            label: 'Test',
-                            value: report.testName,
-                          ),
-                          _InfoRow(
-                            icon: Icons.calendar_today_rounded,
+                          InfoRow(label: 'Test', value: report.testName),
+                          InfoRow(
                             label: 'Date',
                             value: dateFmt.format(report.testDate),
                           ),
                           if (report.testType != null)
-                            _InfoRow(
-                              icon: Icons.category_rounded,
-                              label: 'Type',
-                              value: report.testType!,
-                            ),
+                            InfoRow(label: 'Type', value: report.testType!),
                         ],
                       ),
                       if (report.labValues != null &&
@@ -171,18 +161,16 @@ class LabReportDetailScreen extends ConsumerWidget {
                       if (report.doctorName.isNotEmpty ||
                           report.institutionName != null) ...[
                         const SizedBox(height: 12),
-                        _InfoSection(
+                        InfoSection(
                           title: 'Appointment',
                           rows: [
-                            _InfoRow(
-                              icon: Icons.medical_services_rounded,
+                            InfoRow(
                               label: 'Doctor',
                               value: report.doctorName.isEmpty
                                   ? '-'
                                   : report.doctorName,
                             ),
-                            _InfoRow(
-                              icon: Icons.business_rounded,
+                            InfoRow(
                               label: 'Institution',
                               value: report.institutionName ?? '-',
                             ),
@@ -197,7 +185,7 @@ class LabReportDetailScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                         FilledButton.icon(
                           onPressed: () => _openFile(context, ref, report.id),
-                          icon: const Icon(Icons.open_in_new_rounded),
+                          icon: const Icon(Icons.open_in_new_outlined),
                           label: const Text('View Report'),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size.fromHeight(48),
@@ -224,27 +212,27 @@ class _LabValuesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
+    return GlassCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Lab Values',
-            style: tt.titleSmall?.copyWith(
+            'LAB VALUES',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: glass.gradientStart,
               fontWeight: FontWeight.w700,
-              color: cs.primary,
+              letterSpacing: 1.1,
             ),
           ),
-          const SizedBox(height: 12),
-          ...labValues.map((lv) => _LabValueRow(labValue: lv)),
+          const SizedBox(height: 4),
+          for (var i = 0; i < labValues.length; i++) ...[
+            _LabValueRow(labValue: labValues[i]),
+            if (i < labValues.length - 1)
+              Divider(height: 1, thickness: 0.5, color: glass.glassBorder),
+          ],
         ],
       ),
     );
@@ -256,15 +244,15 @@ class _LabValueRow extends StatelessWidget {
 
   final LabValue labValue;
 
-  Color _statusColor(String status) {
+  StatusTone _statusTone(String status) {
     switch (status.toLowerCase()) {
       case 'high':
       case 'critical':
-        return Colors.red;
+        return StatusTone.critical;
       case 'low':
-        return Colors.orange;
+        return StatusTone.warning;
       default:
-        return Colors.green;
+        return StatusTone.positive;
     }
   }
 
@@ -278,160 +266,43 @@ class _LabValueRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final color = _statusColor(labValue.status);
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
+    final tt = theme.textTheme;
+    final tone = _statusTone(labValue.status);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            margin: const EdgeInsets.only(top: 5, right: 10),
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        labValue.parameterName,
-                        style: tt.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: cs.onSurface,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
-                        borderRadius: const BorderRadius.all(
-                          Radius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        labValue.status.toUpperCase(),
-                        style: tt.labelSmall?.copyWith(
-                          color: color,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Text(
-                      _displayValue(),
-                      style: tt.bodySmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (labValue.referenceRange != null)
-                      Text(
-                        '  ·  Ref: ${labValue.referenceRange}',
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoSection extends StatelessWidget {
-  const _InfoSection({required this.title, required this.rows});
-
-  final String title;
-  final List<_InfoRow> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: tt.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: cs.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...rows,
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: cs.onSurfaceVariant),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  labValue.parameterName,
+                  style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurface,
-                fontWeight: FontWeight.w600,
+              StatusBadge.tone(
+                context,
+                label: labValue.status.toUpperCase(),
+                tone: tone,
               ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Text(
+                _displayValue(),
+                style: tt.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              if (labValue.referenceRange != null)
+                Text(
+                  '  ·  Ref: ${labValue.referenceRange}',
+                  style: tt.bodySmall?.copyWith(color: glass.muted),
+                ),
+            ],
           ),
         ],
       ),
@@ -446,27 +317,22 @@ class _NotesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
+    return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Notes',
-            style: tt.titleSmall?.copyWith(
+            'NOTES',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: glass.gradientStart,
               fontWeight: FontWeight.w700,
-              color: cs.primary,
+              letterSpacing: 1.1,
             ),
           ),
           const SizedBox(height: 8),
-          Text(content, style: tt.bodySmall?.copyWith(color: cs.onSurface)),
+          Text(content, style: theme.textTheme.bodySmall),
         ],
       ),
     );

@@ -59,14 +59,3 @@ class AppointmentStatsResponse {
   final bool success;
   final AppointmentStats data;
 }
-
-@JsonSerializable()
-class PatientsCountResponse {
-  const PatientsCountResponse({required this.success, required this.count});
-
-  factory PatientsCountResponse.fromJson(Map<String, dynamic> json) =>
-      _$PatientsCountResponseFromJson(json);
-
-  final bool success;
-  final int count;
-}

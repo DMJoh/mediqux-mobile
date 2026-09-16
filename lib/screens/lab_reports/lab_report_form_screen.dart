@@ -17,6 +17,8 @@ import 'package:mediqux_mobile/providers/institution_provider.dart';
 import 'package:mediqux_mobile/providers/lab_report_provider.dart';
 import 'package:mediqux_mobile/providers/patient_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/form_section.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 
 const _testTypes = [
   'Blood',
@@ -347,30 +349,22 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
     }
 
     return Scaffold(
-      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
-        leading: CloseButton(
-          color: cs.onSurface,
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          _isEdit ? 'Edit Lab Report' : 'New Lab Report',
-          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-        ),
+        leading: CloseButton(onPressed: () => context.pop()),
+        title: Text(_isEdit ? 'Edit Lab Report' : 'New Lab Report'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton(
+            padding: const EdgeInsets.only(right: 12),
+            child: GradientButton(
+              compact: true,
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: cs.primary,
+                        color: Colors.white,
                       ),
                     )
                   : const Text('Save'),
@@ -381,7 +375,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -396,248 +390,260 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                   ),
                 )
               else ...[
-                if (!_isEdit)
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedPatientId,
-                    decoration: const InputDecoration(labelText: 'Patient *'),
-                    items: _patients
-                        .map(
-                          (p) => DropdownMenuItem(
-                            value: p.id,
-                            child: Text(p.fullName),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedPatientId = v),
-                    validator: (v) => v == null ? 'Patient is required' : null,
-                  )
-                else
-                  TextFormField(
-                    initialValue:
-                        _patients
-                            .where((p) => p.id == _selectedPatientId)
-                            .map((p) => p.fullName)
-                            .firstOrNull ??
-                        '',
-                    readOnly: true,
-                    decoration: const InputDecoration(labelText: 'Patient'),
-                  ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _testNameCtrl,
-                  decoration: const InputDecoration(labelText: 'Test Name *'),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Test name is required'
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedTestType,
-                  decoration: const InputDecoration(labelText: 'Test Type *'),
-                  items: _testTypes
-                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedTestType = v),
-                  validator: (v) => v == null ? 'Test type is required' : null,
-                ),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: _pickDate,
-                  child: AbsorbPointer(
-                    child: TextFormField(
+                FormSection(
+                  title: 'Details',
+                  children: [
+                    if (!_isEdit)
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedPatientId,
+                        decoration: const InputDecoration(
+                          labelText: 'Patient *',
+                        ),
+                        items: _patients
+                            .map(
+                              (p) => DropdownMenuItem(
+                                value: p.id,
+                                child: Text(p.fullName),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) =>
+                            setState(() => _selectedPatientId = v),
+                        validator: (v) =>
+                            v == null ? 'Patient is required' : null,
+                      )
+                    else
+                      TextFormField(
+                        initialValue:
+                            _patients
+                                .where((p) => p.id == _selectedPatientId)
+                                .map((p) => p.fullName)
+                                .firstOrNull ??
+                            '',
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Patient',
+                        ),
+                      ),
+                    TextFormField(
+                      controller: _testNameCtrl,
                       decoration: const InputDecoration(
-                        labelText: 'Test Date *',
-                        hintText: 'Select date',
-                        suffixIcon: Icon(Icons.calendar_today_rounded),
+                        labelText: 'Test Name *',
                       ),
-                      controller: TextEditingController(
-                        text: _selectedDate != null
-                            ? dateFmt.format(_selectedDate!)
-                            : '',
-                      ),
-                      validator: (_) =>
-                          _selectedDate == null ? 'Date is required' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Test name is required'
+                          : null,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedAppointmentId,
-                  decoration: const InputDecoration(
-                    labelText: 'Appointment (optional)',
-                  ),
-                  isExpanded: true,
-                  items: [
-                    const DropdownMenuItem(child: Text('None')),
-                    ..._appointments.map(
-                      (a) => DropdownMenuItem(
-                        value: a.id,
-                        child: Text(
-                          _aptLabel(a),
-                          overflow: TextOverflow.ellipsis,
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedTestType,
+                      decoration: const InputDecoration(
+                        labelText: 'Test Type *',
+                      ),
+                      items: _testTypes
+                          .map(
+                            (t) => DropdownMenuItem(value: t, child: Text(t)),
+                          )
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _selectedTestType = v),
+                      validator: (v) =>
+                          v == null ? 'Test type is required' : null,
+                    ),
+                    GestureDetector(
+                      onTap: _pickDate,
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          decoration: const InputDecoration(
+                            labelText: 'Test Date *',
+                            hintText: 'Select date',
+                            suffixIcon: Icon(Icons.calendar_today_outlined),
+                          ),
+                          controller: TextEditingController(
+                            text: _selectedDate != null
+                                ? dateFmt.format(_selectedDate!)
+                                : '',
+                          ),
+                          validator: (_) => _selectedDate == null
+                              ? 'Date is required'
+                              : null,
                         ),
                       ),
                     ),
-                  ],
-                  onChanged: (v) => setState(() => _selectedAppointmentId = v),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedInstitutionId,
-                  decoration: const InputDecoration(
-                    labelText: 'Institution (optional)',
-                  ),
-                  isExpanded: true,
-                  items: [
-                    const DropdownMenuItem(child: Text('None')),
-                    ..._institutions.map(
-                      (i) => DropdownMenuItem(
-                        value: i.id,
-                        child: Text(i.name, overflow: TextOverflow.ellipsis),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedAppointmentId,
+                      decoration: const InputDecoration(
+                        labelText: 'Appointment (optional)',
                       ),
-                    ),
-                  ],
-                  onChanged: (v) => setState(() => _selectedInstitutionId = v),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedDoctorId,
-                  decoration: const InputDecoration(
-                    labelText: 'Performed By (optional)',
-                  ),
-                  isExpanded: true,
-                  items: [
-                    const DropdownMenuItem(child: Text('None')),
-                    ..._doctors.map(
-                      (d) => DropdownMenuItem(
-                        value: d.id,
-                        child: Text(
-                          d.fullName,
-                          overflow: TextOverflow.ellipsis,
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem(child: Text('None')),
+                        ..._appointments.map(
+                          (a) => DropdownMenuItem(
+                            value: a.id,
+                            child: Text(
+                              _aptLabel(a),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => _selectedAppointmentId = v),
+                    ),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedInstitutionId,
+                      decoration: const InputDecoration(
+                        labelText: 'Institution (optional)',
                       ),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem(child: Text('None')),
+                        ..._institutions.map(
+                          (i) => DropdownMenuItem(
+                            value: i.id,
+                            child: Text(
+                              i.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => _selectedInstitutionId = v),
+                    ),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedDoctorId,
+                      decoration: const InputDecoration(
+                        labelText: 'Performed By (optional)',
+                      ),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem(child: Text('None')),
+                        ..._doctors.map(
+                          (d) => DropdownMenuItem(
+                            value: d.id,
+                            child: Text(
+                              d.fullName,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) => setState(() => _selectedDoctorId = v),
                     ),
                   ],
-                  onChanged: (v) => setState(() => _selectedDoctorId = v),
                 ),
-                const SizedBox(height: 20),
-
-                _SectionHeader(
+                const SizedBox(height: 16),
+                FormSection(
                   title: 'Lab Values',
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextButton.icon(
-                        onPressed: _showPanelPicker,
-                        icon: const Icon(Icons.library_books_rounded, size: 16),
-                        label: const Text('Load Panel'),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.add_circle_outline_rounded,
-                          color: cs.primary,
-                        ),
-                        tooltip: 'Add row',
-                        onPressed: _addLabValueRow,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (_labValues.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      'No lab values. Load a panel or add rows manually.',
-                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                else
-                  ..._labValues.asMap().entries.map(
-                    (entry) => _LabValueRowWidget(
-                      key: ValueKey(entry.key),
-                      entry: entry.value,
-                      onRemove: () => _removeLabValueRow(entry.key),
-                      onChanged: () => setState(() {}),
-                    ),
-                  ),
-
-                if (!_isEdit) ...[
-                  const SizedBox(height: 20),
-                  OutlinedButton.icon(
-                    onPressed: _pickFile,
-                    icon: const Icon(Icons.upload_file_rounded),
-                    label: const Text('Upload PDF (optional)'),
-                  ),
-                  if (_fileName != null) ...[
-                    const SizedBox(height: 8),
+                  children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Icon(
-                          Icons.picture_as_pdf_rounded,
-                          size: 18,
-                          color: cs.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _fileName!,
-                            style: tt.bodySmall?.copyWith(color: cs.primary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        TextButton.icon(
+                          onPressed: _showPanelPicker,
+                          icon: const Icon(
+                            Icons.library_books_outlined,
+                            size: 16,
+                          ),
+                          label: const Text('Load Panel'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 16),
-                          onPressed: () => setState(() {
-                            _filePath = null;
-                            _fileName = null;
-                          }),
+                          icon: Icon(
+                            Icons.add_circle_outline_rounded,
+                            color: cs.primary,
+                          ),
+                          tooltip: 'Add row',
+                          onPressed: _addLabValueRow,
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
                       ],
                     ),
+                    if (_labValues.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          'No lab values. Load a panel or add rows '
+                          'manually.',
+                          style: tt.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    else
+                      Column(
+                        children: _labValues
+                            .asMap()
+                            .entries
+                            .map(
+                              (entry) => _LabValueRowWidget(
+                                key: ValueKey(entry.key),
+                                entry: entry.value,
+                                onRemove: () =>
+                                    _removeLabValueRow(entry.key),
+                                onChanged: () => setState(() {}),
+                              ),
+                            )
+                            .toList(),
+                      ),
                   ],
+                ),
+                if (!_isEdit) ...[
+                  const SizedBox(height: 16),
+                  FormSection(
+                    title: 'File Attachment',
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _pickFile,
+                        icon: const Icon(Icons.upload_file_outlined),
+                        label: const Text('Upload PDF (optional)'),
+                      ),
+                      if (_fileName != null)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.picture_as_pdf_outlined,
+                              size: 18,
+                              color: cs.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _fileName!,
+                                style: tt.bodySmall?.copyWith(
+                                  color: cs.primary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                size: 16,
+                              ),
+                              onPressed: () => setState(() {
+                                _filePath = null;
+                                _fileName = null;
+                              }),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                 ],
-                const SizedBox(height: 32),
               ],
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, this.trailing});
-
-  final String title;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Row(
-      children: [
-        Text(
-          title,
-          style: tt.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: cs.primary,
-          ),
-        ),
-        const Spacer(),
-        if (trailing != null) trailing!,
-      ],
     );
   }
 }

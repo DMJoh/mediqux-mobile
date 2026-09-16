@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/medication/medication.dart';
 import 'package:mediqux_mobile/providers/medication_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
-import 'package:mediqux_mobile/widgets/detail_hero.dart';
+import 'package:mediqux_mobile/widgets/glass_app_header.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/info_section.dart';
+import 'package:mediqux_mobile/widgets/status_badge.dart';
 
 class MedicationDetailScreen extends ConsumerWidget {
   const MedicationDetailScreen({required this.medicationId, super.key});
@@ -55,11 +59,10 @@ class MedicationDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final glass = Theme.of(context).extension<GlassColors>()!;
     final medicationAsync = ref.watch(medicationDetailProvider(medicationId));
 
     return Scaffold(
-      backgroundColor: cs.surface,
       body: medicationAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(
@@ -86,12 +89,12 @@ class MedicationDetailScreen extends ConsumerWidget {
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: DetailHero(
+                child: GlassAppHeader(
                   title: medication.name,
                   onBack: () => context.pop(),
                   actions: [
                     IconButton(
-                      icon: const Icon(Icons.edit_rounded),
+                      icon: const Icon(Icons.edit_outlined),
                       tooltip: 'Edit',
                       onPressed: () =>
                           context.push('/medications/${medication.id}/edit'),
@@ -109,7 +112,7 @@ class MedicationDetailScreen extends ConsumerWidget {
                           child: Row(
                             children: [
                               Icon(
-                                Icons.delete_rounded,
+                                Icons.delete_outline_rounded,
                                 color: cs.error,
                                 size: 20,
                               ),
@@ -128,28 +131,24 @@ class MedicationDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      _InfoSection(
+                      InfoSection(
                         title: 'Drug Info',
                         rows: [
                           if (medication.genericName != null)
-                            _InfoRow(
-                              icon: Icons.science_rounded,
+                            InfoRow(
                               label: 'Generic',
                               value: medication.genericName!,
                             ),
                           if (medication.manufacturer != null)
-                            _InfoRow(
-                              icon: Icons.factory_rounded,
+                            InfoRow(
                               label: 'Manufacturer',
                               value: medication.manufacturer!,
                             ),
-                          _InfoRow(
-                            icon: Icons.bar_chart_rounded,
+                          InfoRow(
                             label: 'Prescriptions',
                             value: '${medication.prescriptionCount}',
                           ),
-                          _InfoRow(
-                            icon: Icons.people_rounded,
+                          InfoRow(
                             label: 'Patients',
                             value: '${medication.patientMedicationCount}',
                           ),
@@ -157,32 +156,26 @@ class MedicationDetailScreen extends ConsumerWidget {
                       ),
                       if (medication.description != null) ...[
                         const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: cs.surfaceContainerLow,
-                            borderRadius: const BorderRadius.all(
-                              Radius.circular(16),
-                            ),
-                          ),
+                        GlassCard(
+                          margin: EdgeInsets.zero,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Description',
-                                style: tt.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: cs.primary,
-                                ),
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: glass.gradientStart,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.1,
+                                    ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 medication.description!,
-                                style: tt.bodySmall?.copyWith(
-                                  color: cs.onSurface,
-                                  height: 1.5,
-                                ),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.copyWith(height: 1.5),
                               ),
                             ],
                           ),
@@ -223,23 +216,19 @@ class _ChipsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
+    return GlassCard(
+      margin: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
-            style: tt.titleSmall?.copyWith(
+            title.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: glass.gradientStart,
               fontWeight: FontWeight.w700,
-              color: cs.primary,
+              letterSpacing: 1.1,
             ),
           ),
           const SizedBox(height: 10),
@@ -248,107 +237,13 @@ class _ChipsSection extends StatelessWidget {
             runSpacing: 8,
             children: items
                 .map(
-                  (item) => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer,
-                      borderRadius: const BorderRadius.all(Radius.circular(20)),
-                    ),
-                    child: Text(
-                      item,
-                      style: tt.labelMedium?.copyWith(
-                        color: cs.onPrimaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                  (item) => StatusBadge.tone(
+                    context,
+                    label: item,
+                    tone: StatusTone.neutral,
                   ),
                 )
                 .toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoSection extends StatelessWidget {
-  const _InfoSection({required this.title, required this.rows});
-
-  final String title;
-  final List<_InfoRow> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: tt.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: cs.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...rows,
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: cs.onSurfaceVariant),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 90,
-            child: Text(
-              label,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
           ),
         ],
       ),

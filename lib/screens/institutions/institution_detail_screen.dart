@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/institution/institution.dart';
 import 'package:mediqux_mobile/providers/institution_provider.dart';
 import 'package:mediqux_mobile/screens/institutions/institutions_list_screen.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
-import 'package:mediqux_mobile/widgets/detail_hero.dart';
+import 'package:mediqux_mobile/widgets/glass_app_header.dart';
+import 'package:mediqux_mobile/widgets/glass_card.dart';
+import 'package:mediqux_mobile/widgets/gradient_avatar.dart';
+import 'package:mediqux_mobile/widgets/info_section.dart';
+import 'package:mediqux_mobile/widgets/status_badge.dart';
 
 class InstitutionDetailScreen extends ConsumerWidget {
   const InstitutionDetailScreen({required this.institutionId, super.key});
@@ -75,7 +80,6 @@ class InstitutionDetailScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: cs.surface,
       body: institutionAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(
@@ -100,16 +104,15 @@ class InstitutionDetailScreen extends ConsumerWidget {
         ),
         data: (institution) {
           final color = institutionColor(institution.type);
-          final icon = institutionIcon(institution.type);
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: DetailHero(
+                child: GlassAppHeader(
                   title: institution.name,
                   onBack: () => context.pop(),
                   actions: [
                     IconButton(
-                      icon: const Icon(Icons.edit_rounded),
+                      icon: const Icon(Icons.edit_outlined),
                       tooltip: 'Edit',
                       onPressed: () =>
                           context.push('/institutions/${institution.id}/edit'),
@@ -127,7 +130,7 @@ class InstitutionDetailScreen extends ConsumerWidget {
                           child: Row(
                             children: [
                               Icon(
-                                Icons.delete_rounded,
+                                Icons.delete_outline_rounded,
                                 color: cs.error,
                                 size: 20,
                               ),
@@ -151,54 +154,26 @@ class InstitutionDetailScreen extends ConsumerWidget {
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: color.withValues(alpha: 0.1),
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(20),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(icon, color: color, size: 16),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      institution.type!,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelMedium
-                                          ?.copyWith(
-                                            color: color,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                    ),
-                                  ],
-                                ),
+                              StatusBadge(
+                                label: institution.type!,
+                                color: color,
                               ),
                             ],
                           ),
                         ),
-                      _InfoSection(
+                      InfoSection(
                         title: 'Contact',
                         rows: [
-                          _InfoRow(
-                            icon: Icons.phone_rounded,
+                          InfoRow(
                             label: 'Phone',
                             value: institution.phone ?? '-',
                           ),
-                          _InfoRow(
-                            icon: Icons.email_rounded,
+                          InfoRow(
                             label: 'Email',
                             value: institution.email ?? '-',
                           ),
                           if (institution.website != null)
-                            _InfoRow(
-                              icon: Icons.language_rounded,
+                            InfoRow(
                               label: 'Website',
                               value: institution.website!,
                             ),
@@ -206,11 +181,10 @@ class InstitutionDetailScreen extends ConsumerWidget {
                       ),
                       if (institution.address != null) ...[
                         const SizedBox(height: 12),
-                        _InfoSection(
+                        InfoSection(
                           title: 'Address',
                           rows: [
-                            _InfoRow(
-                              icon: Icons.location_on_rounded,
+                            InfoRow(
                               label: 'Address',
                               value: institution.address!,
                             ),
@@ -239,27 +213,22 @@ class _DoctorsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
     final doctors = institution.doctors ?? [];
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
+    return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Text(
-                'Associated Doctors',
-                style: tt.titleSmall?.copyWith(
+                'ASSOCIATED DOCTORS',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: glass.gradientStart,
                   fontWeight: FontWeight.w700,
-                  color: cs.primary,
+                  letterSpacing: 1.1,
                 ),
               ),
               const Spacer(),
@@ -269,13 +238,13 @@ class _DoctorsSection extends StatelessWidget {
                   vertical: 3,
                 ),
                 decoration: BoxDecoration(
-                  color: cs.primaryContainer,
+                  color: glass.glass2,
                   borderRadius: const BorderRadius.all(Radius.circular(20)),
+                  border: Border.all(color: glass.glassBorder),
                 ),
                 child: Text(
                   '${doctors.length}',
-                  style: tt.labelSmall?.copyWith(
-                    color: cs.onPrimaryContainer,
+                  style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -286,7 +255,7 @@ class _DoctorsSection extends StatelessWidget {
           if (doctors.isEmpty)
             Text(
               'No doctors assigned to this institution.',
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(color: glass.muted),
             )
           else
             ...doctors.map(
@@ -294,18 +263,13 @@ class _DoctorsSection extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: cs.secondaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.person_rounded,
-                        size: 18,
-                        color: cs.onSecondaryContainer,
-                      ),
+                    GradientAvatar(
+                      initials:
+                          '${d.firstName.isNotEmpty ? d.firstName[0] : ''}'
+                          '${d.lastName.isNotEmpty ? d.lastName[0] : ''}'
+                              .toUpperCase(),
+                      size: 36,
+                      glow: false,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -314,16 +278,15 @@ class _DoctorsSection extends StatelessWidget {
                         children: [
                           Text(
                             d.fullName,
-                            style: tt.bodySmall?.copyWith(
+                            style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: cs.onSurface,
                             ),
                           ),
                           if (d.specialty != null)
                             Text(
                               d.specialty!,
-                              style: tt.labelSmall?.copyWith(
-                                color: cs.onSurfaceVariant,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: glass.muted,
                               ),
                             ),
                         ],
@@ -333,88 +296,6 @@ class _DoctorsSection extends StatelessWidget {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoSection extends StatelessWidget {
-  const _InfoSection({required this.title, required this.rows});
-
-  final String title;
-  final List<_InfoRow> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: tt.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: cs.primary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...rows,
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: cs.onSurfaceVariant),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 70,
-            child: Text(
-              label,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
         ],
       ),
     );

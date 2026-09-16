@@ -5,6 +5,8 @@ import 'package:mediqux_mobile/models/condition/condition.dart';
 import 'package:mediqux_mobile/models/condition/condition_request.dart';
 import 'package:mediqux_mobile/providers/condition_provider.dart';
 import 'package:mediqux_mobile/utils/error_utils.dart';
+import 'package:mediqux_mobile/widgets/form_section.dart';
+import 'package:mediqux_mobile/widgets/gradient_button.dart';
 
 const _kCategories = [
   'Cardiovascular',
@@ -101,8 +103,6 @@ class _ConditionFormScreenState extends ConsumerState<ConditionFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     if (_isEdit && !_initialized) {
       ref.watch(conditionDetailProvider(widget.conditionId!)).whenData((cond) {
         if (!_initialized) {
@@ -113,10 +113,7 @@ class _ConditionFormScreenState extends ConsumerState<ConditionFormScreen> {
       });
       if (!_initialized) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Edit Condition'),
-            backgroundColor: cs.surface,
-          ),
+          appBar: AppBar(title: const Text('Edit Condition')),
           body: const Center(
             child: CircularProgressIndicator(
               strokeCap: StrokeCap.round,
@@ -128,29 +125,24 @@ class _ConditionFormScreenState extends ConsumerState<ConditionFormScreen> {
     }
 
     return Scaffold(
-      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
         leading: _isEdit
-            ? BackButton(color: cs.onSurface, onPressed: () => context.pop())
-            : CloseButton(color: cs.onSurface, onPressed: () => context.pop()),
-        title: Text(
-          _isEdit ? 'Edit Condition' : 'Add Condition',
-          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
-        ),
+            ? BackButton(onPressed: () => context.pop())
+            : CloseButton(onPressed: () => context.pop()),
+        title: Text(_isEdit ? 'Edit Condition' : 'Add Condition'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton(
+            padding: const EdgeInsets.only(right: 12),
+            child: GradientButton(
+              compact: true,
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: cs.primary,
+                        color: Colors.white,
                       ),
                     )
                   : const Text('Save'),
@@ -161,63 +153,71 @@ class _ConditionFormScreenState extends ConsumerState<ConditionFormScreen> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Condition Name *',
-                ),
-                textCapitalization: TextCapitalization.words,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Name is required';
-                  }
-                  return null;
-                },
+              FormSection(
+                title: 'Details',
+                children: [
+                  TextFormField(
+                    controller: _nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Condition Name *',
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Name is required';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _icdCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'ICD Code',
+                      hintText: 'e.g. I10',
+                    ),
+                  ),
+                  DropdownButtonFormField<String>(
+                    // value updates display on every rebuild;
+                    // initialValue only sets once, breaking edit pre-fill.
+                    // ignore: deprecated_member_use
+                    value: _selectedCategory,
+                    decoration: const InputDecoration(labelText: 'Category'),
+                    items: _kCategories
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedCategory = v),
+                  ),
+                  DropdownButtonFormField<String>(
+                    // value updates display on every rebuild;
+                    // initialValue only sets once, breaking edit pre-fill.
+                    // ignore: deprecated_member_use
+                    value: _selectedSeverity,
+                    decoration: const InputDecoration(labelText: 'Severity'),
+                    items: _kSeverities
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedSeverity = v),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _icdCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'ICD Code',
-                  hintText: 'e.g. I10',
-                ),
+              const SizedBox(height: 16),
+              FormSection(
+                title: 'Description',
+                children: [
+                  TextFormField(
+                    controller: _descCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                    ),
+                    maxLines: 4,
+                    keyboardType: TextInputType.multiline,
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                // value updates display on every rebuild;
-                // initialValue only sets once, breaking edit pre-fill.
-                // ignore: deprecated_member_use
-                value: _selectedCategory,
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: _kCategories
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedCategory = v),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                // value updates display on every rebuild;
-                // initialValue only sets once, breaking edit pre-fill.
-                // ignore: deprecated_member_use
-                value: _selectedSeverity,
-                decoration: const InputDecoration(labelText: 'Severity'),
-                items: _kSeverities
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedSeverity = v),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descCtrl,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 4,
-                keyboardType: TextInputType.multiline,
-              ),
-              const SizedBox(height: 32),
             ],
           ),
         ),

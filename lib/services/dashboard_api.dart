@@ -14,7 +14,4 @@ abstract class DashboardApi {
 
   @GET('/appointments/stats/summary')
   Future<AppointmentStatsResponse> getAppointmentStats();
-
-  @GET('/patients')
-  Future<PatientsCountResponse> getPatientCount();
 }
