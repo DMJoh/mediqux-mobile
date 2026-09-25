@@ -107,9 +107,7 @@ class RelatedRecordsSection extends StatelessWidget {
               padding: const EdgeInsets.only(top: 12),
               child: Text(
                 emptyLabel!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: glass.muted,
-                ),
+                style: theme.textTheme.bodySmall?.copyWith(color: glass.muted),
               ),
             )
           else

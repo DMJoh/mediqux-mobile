@@ -171,9 +171,7 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
                   ),
                   TextFormField(
                     controller: _lastNameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Last Name *',
-                    ),
+                    decoration: const InputDecoration(labelText: 'Last Name *'),
                     textCapitalization: TextCapitalization.words,
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
@@ -218,9 +216,7 @@ class _DoctorFormScreenState extends ConsumerState<DoctorFormScreen> {
                       if (v == null || v.trim().isEmpty) {
                         return null;
                       }
-                      if (!RegExp(
-                        r'^[^@]+@[^@]+\.[^@]+$',
-                      ).hasMatch(v.trim())) {
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
                         return 'Invalid email address';
                       }
                       return null;

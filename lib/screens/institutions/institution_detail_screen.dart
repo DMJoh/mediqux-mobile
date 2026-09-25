@@ -258,19 +258,15 @@ class _DoctorsSection extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(color: glass.muted),
             )
           else
-            ...doctors.map(
-              (d) => Padding(
+            ...doctors.map((d) {
+              final firstInitial = d.firstName.isNotEmpty ? d.firstName[0] : '';
+              final lastInitial = d.lastName.isNotEmpty ? d.lastName[0] : '';
+              final initials = '$firstInitial$lastInitial'.toUpperCase();
+              return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   children: [
-                    GradientAvatar(
-                      initials:
-                          '${d.firstName.isNotEmpty ? d.firstName[0] : ''}'
-                          '${d.lastName.isNotEmpty ? d.lastName[0] : ''}'
-                              .toUpperCase(),
-                      size: 36,
-                      glow: false,
-                    ),
+                    GradientAvatar(initials: initials, size: 36, glow: false),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -294,8 +290,8 @@ class _DoctorsSection extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-            ),
+              );
+            }),
         ],
       ),
     );

@@ -421,9 +421,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                                 .firstOrNull ??
                             '',
                         readOnly: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Patient',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Patient'),
                       ),
                     TextFormField(
                       controller: _testNameCtrl,
@@ -444,8 +442,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                             (t) => DropdownMenuItem(value: t, child: Text(t)),
                           )
                           .toList(),
-                      onChanged: (v) =>
-                          setState(() => _selectedTestType = v),
+                      onChanged: (v) => setState(() => _selectedTestType = v),
                       validator: (v) =>
                           v == null ? 'Test type is required' : null,
                     ),
@@ -463,9 +460,8 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                                 ? dateFmt.format(_selectedDate!)
                                 : '',
                           ),
-                          validator: (_) => _selectedDate == null
-                              ? 'Date is required'
-                              : null,
+                          validator: (_) =>
+                              _selectedDate == null ? 'Date is required' : null,
                         ),
                       ),
                     ),
@@ -584,8 +580,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                               (entry) => _LabValueRowWidget(
                                 key: ValueKey(entry.key),
                                 entry: entry.value,
-                                onRemove: () =>
-                                    _removeLabValueRow(entry.key),
+                                onRemove: () => _removeLabValueRow(entry.key),
                                 onChanged: () => setState(() {}),
                               ),
                             )
@@ -623,10 +618,7 @@ class _LabReportFormScreenState extends ConsumerState<LabReportFormScreen> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(
-                                Icons.close_rounded,
-                                size: 16,
-                              ),
+                              icon: const Icon(Icons.close_rounded, size: 16),
                               onPressed: () => setState(() {
                                 _filePath = null;
                                 _fileName = null;

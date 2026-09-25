@@ -96,9 +96,7 @@ class ConditionDetailScreen extends ConsumerWidget {
           ),
         ),
         data: (condition) {
-          final chips = [
-            if (condition.category != null) condition.category!,
-          ];
+          final chips = [if (condition.category != null) condition.category!];
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
