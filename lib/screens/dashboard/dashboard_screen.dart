@@ -85,7 +85,7 @@ class DashboardScreen extends ConsumerWidget {
                 orElse: () => const SizedBox.shrink(),
               ),
             ),
-            const SliverToBoxAdapter(child: _QuickActionsRow()),
+            const SliverToBoxAdapter(child: _ShortcutsGrid()),
             SliverToBoxAdapter(
               child: _StatsGrid(
                 statsAsync: statsAsync,
@@ -168,7 +168,26 @@ class _DashboardHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+              GlassCard(
+                nested: true,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                onTap: () => context.push('/search'),
+                child: Row(
+                  children: [
+                    Icon(Icons.search_rounded, size: 19, color: glass.muted),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Search patients, doctors, records…',
+                      style: tt.bodySmall?.copyWith(color: glass.muted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
               Text(
                 dateStr,
                 style: AppTheme.monoStyle(
@@ -445,8 +464,8 @@ class _AddPatientCard extends StatelessWidget {
   }
 }
 
-class _QuickAction {
-  const _QuickAction({
+class _Shortcut {
+  const _Shortcut({
     required this.icon,
     required this.label,
     required this.route,
@@ -457,84 +476,136 @@ class _QuickAction {
   final String route;
 }
 
-/// Evenly-spaced row of common "add" shortcuts — deliberately excludes
-/// "Add Patient" since that's already offered at the end of the patient
-/// roster strip directly above.
-class _QuickActionsRow extends StatelessWidget {
-  const _QuickActionsRow();
+/// One-tap shortcuts to every entity that used to be split confusingly
+/// across the old "Records" and "More" tabs. Patients gets its own bottom
+/// tab, so it's excluded here.
+class _ShortcutsGrid extends StatelessWidget {
+  const _ShortcutsGrid();
 
-  static const _actions = [
-    _QuickAction(
-      icon: Icons.event_available_outlined,
-      label: 'Add Appointment',
-      route: '/appointments/new',
+  static const _shortcuts = [
+    _Shortcut(
+      icon: Icons.calendar_month_outlined,
+      label: 'Appointments',
+      route: '/appointments',
     ),
-    _QuickAction(
-      icon: Icons.receipt_long_outlined,
-      label: 'Add Prescription',
-      route: '/prescriptions/new',
-    ),
-    _QuickAction(
+    _Shortcut(
       icon: Icons.science_outlined,
-      label: 'Add Lab Report',
-      route: '/lab-reports/new',
+      label: 'Lab Reports',
+      route: '/lab-reports',
     ),
-    _QuickAction(
+    _Shortcut(
+      icon: Icons.image_search_outlined,
+      label: 'Studies',
+      route: '/diagnostic-studies',
+    ),
+    _Shortcut(
+      icon: Icons.business_outlined,
+      label: 'Institutions',
+      route: '/institutions',
+    ),
+    _Shortcut(
       icon: Icons.medication_outlined,
-      label: 'Add Medication',
-      route: '/medications/new',
+      label: 'Medications',
+      route: '/medications',
+    ),
+    _Shortcut(
+      icon: Icons.health_and_safety_outlined,
+      label: 'Conditions',
+      route: '/conditions',
+    ),
+    _Shortcut(
+      icon: Icons.receipt_long_outlined,
+      label: 'Prescriptions',
+      route: '/prescriptions',
+    ),
+    _Shortcut(
+      icon: Icons.people_outline_rounded,
+      label: 'Doctors',
+      route: '/doctors',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final glass = Theme.of(context).extension<GlassColors>()!;
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Row(
-        children: [
-          for (var i = 0; i < _actions.length; i++) ...[
-            if (i > 0) const SizedBox(width: 10),
-            Expanded(
-              child: _QuickActionCard(action: _actions[i], glass: glass),
+      child: GlassCard(
+        padding: const EdgeInsets.fromLTRB(10, 16, 10, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 10),
+              child: Text(
+                'Shortcuts',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            GridView.count(
+              crossAxisCount: 4,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 4,
+              childAspectRatio: 0.78,
+              children: [
+                for (final s in _shortcuts)
+                  _ShortcutTile(shortcut: s, glass: glass),
+              ],
             ),
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
-class _QuickActionCard extends StatelessWidget {
-  const _QuickActionCard({required this.action, required this.glass});
+class _ShortcutTile extends StatelessWidget {
+  const _ShortcutTile({required this.shortcut, required this.glass});
 
-  final _QuickAction action;
+  final _Shortcut shortcut;
   final GlassColors glass;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 90,
-      child: GlassCard(
-        nested: true,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-        onTap: () => context.push(action.route),
+    return InkWell(
+      borderRadius: const BorderRadius.all(Radius.circular(14)),
+      onTap: () => context.push(shortcut.route),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(action.icon, size: 22, color: glass.gradientStart),
-            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: glass.accentGradient,
+                borderRadius: const BorderRadius.all(Radius.circular(13)),
+                boxShadow: [
+                  BoxShadow(
+                    color: glass.gradientStart.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Icon(shortcut.icon, size: 19, color: Colors.white),
+            ),
+            const SizedBox(height: 6),
             Flexible(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  action.label,
+                  shortcut.label,
                   textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    height: 1.2,
+                    color: glass.muted,
                     fontSize: 10.5,
                   ),
                 ),
