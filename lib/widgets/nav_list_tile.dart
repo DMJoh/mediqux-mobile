@@ -9,10 +9,11 @@ class NavListTile extends StatelessWidget {
   const NavListTile({
     required this.icon,
     required this.label,
-    required this.onTap,
     super.key,
     this.subtitle,
     this.labelColor,
+    this.trailing,
+    this.onTap,
   });
 
   final IconData icon;
@@ -23,7 +24,14 @@ class NavListTile extends StatelessWidget {
   /// chip from the brand gradient to a flat tint of this color, and colors
   /// the label to match.
   final Color? labelColor;
-  final VoidCallback onTap;
+
+  /// Replaces the trailing chevron — e.g. a status label like "System" for
+  /// a not-yet-interactive settings row.
+  final Widget? trailing;
+
+  /// Omit for a display-only row (no chevron, no ripple) — e.g. a setting
+  /// that's visible but not wired up yet.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +93,14 @@ class NavListTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: glass.muted2, size: 20),
+            trailing ??
+                (onTap != null
+                    ? Icon(
+                        Icons.chevron_right_rounded,
+                        color: glass.muted2,
+                        size: 20,
+                      )
+                    : const SizedBox.shrink()),
           ],
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mediqux_mobile/models/user.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
+import 'package:mediqux_mobile/screens/account/account_screen.dart';
 import 'package:mediqux_mobile/screens/appointments/appointment_detail_screen.dart';
 import 'package:mediqux_mobile/screens/appointments/appointment_form_screen.dart';
 import 'package:mediqux_mobile/screens/appointments/appointments_list_screen.dart';
@@ -26,14 +27,13 @@ import 'package:mediqux_mobile/screens/lab_reports/lab_reports_list_screen.dart'
 import 'package:mediqux_mobile/screens/medications/medication_detail_screen.dart';
 import 'package:mediqux_mobile/screens/medications/medication_form_screen.dart';
 import 'package:mediqux_mobile/screens/medications/medications_list_screen.dart';
-import 'package:mediqux_mobile/screens/more/more_screen.dart';
 import 'package:mediqux_mobile/screens/patients/patient_detail_screen.dart';
 import 'package:mediqux_mobile/screens/patients/patient_form_screen.dart';
 import 'package:mediqux_mobile/screens/patients/patients_list_screen.dart';
 import 'package:mediqux_mobile/screens/prescriptions/prescription_detail_screen.dart';
 import 'package:mediqux_mobile/screens/prescriptions/prescription_form_screen.dart';
 import 'package:mediqux_mobile/screens/prescriptions/prescriptions_list_screen.dart';
-import 'package:mediqux_mobile/screens/records/records_screen.dart';
+import 'package:mediqux_mobile/screens/search/search_screen.dart';
 import 'package:mediqux_mobile/widgets/app_shell.dart';
 
 GoRoute _crudRoute({
@@ -89,7 +89,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             detail: (id) => AppointmentDetailScreen(appointmentId: id),
             editForm: (id) => AppointmentFormScreen(appointmentId: id),
           ),
-          GoRoute(path: '/records', builder: (_, __) => const RecordsScreen()),
+          GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
           GoRoute(
             path: '/lab-reports',
             builder: (_, __) => const LabReportsListScreen(),
@@ -128,7 +128,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             detail: (id) => PrescriptionDetailScreen(prescriptionId: id),
             editForm: (id) => PrescriptionFormScreen(prescriptionId: id),
           ),
-          GoRoute(path: '/more', builder: (_, __) => const MoreScreen()),
+          GoRoute(path: '/account', builder: (_, __) => const AccountScreen()),
           _crudRoute(
             path: '/doctors',
             list: () => const DoctorsListScreen(),

@@ -12,27 +12,15 @@ class AppShell extends ConsumerWidget {
   static const _items = [
     NavBarItem(icon: Icons.home_outlined, label: 'Home'),
     NavBarItem(icon: Icons.people_outline_rounded, label: 'Patients'),
-    NavBarItem(icon: Icons.science_outlined, label: 'Records'),
-    NavBarItem(icon: Icons.grid_view_outlined, label: 'More'),
+    NavBarItem(icon: Icons.person_outline_rounded, label: 'Account'),
   ];
 
   int _selectedIndex() {
     if (location.startsWith('/patients')) {
       return 1;
     }
-    if (location.startsWith('/records') ||
-        location.startsWith('/lab-reports') ||
-        location.startsWith('/diagnostic-studies') ||
-        location.startsWith('/prescriptions')) {
+    if (location.startsWith('/account')) {
       return 2;
-    }
-    if (location.startsWith('/more') ||
-        location.startsWith('/appointments') ||
-        location.startsWith('/doctors') ||
-        location.startsWith('/institutions') ||
-        location.startsWith('/conditions') ||
-        location.startsWith('/medications')) {
-      return 3;
     }
     return 0;
   }
@@ -62,9 +50,7 @@ class AppShell extends ConsumerWidget {
               case 1:
                 context.go('/patients');
               case 2:
-                context.go('/records');
-              case 3:
-                context.go('/more');
+                context.go('/account');
             }
           },
         ),
