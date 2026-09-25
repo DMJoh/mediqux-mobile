@@ -233,9 +233,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         .map(
           (p) => _Hit(
             title: p.medicationName ?? 'Prescription',
-            subtitle:
-                '${p.patientFirstName ?? ''} ${p.patientLastName ?? ''}'
-                    .trim(),
+            subtitle: '${p.patientFirstName ?? ''} ${p.patientLastName ?? ''}'
+                .trim(),
             icon: Icons.receipt_long_outlined,
             route: '/prescriptions/${p.id}',
           ),
@@ -382,8 +381,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             ),
                             child: Column(
                               children: [
-                                for (final hit in group.hits)
-                                  _HitRow(hit: hit),
+                                for (final hit in group.hits) _HitRow(hit: hit),
                               ],
                             ),
                           ),
