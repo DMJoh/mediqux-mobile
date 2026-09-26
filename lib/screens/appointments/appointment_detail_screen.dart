@@ -172,6 +172,7 @@ class AppointmentDetailScreen extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         GlassCard(
                           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),

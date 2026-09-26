@@ -152,6 +152,7 @@ class DiagnosticStudyDetailScreen extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Patient
                       InfoSection(
