@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mediqux_mobile/config/theme.dart';
 import 'package:mediqux_mobile/models/user.dart';
 import 'package:mediqux_mobile/providers/auth_provider.dart';
+import 'package:mediqux_mobile/providers/health_provider.dart';
 import 'package:mediqux_mobile/widgets/glass_card.dart';
 import 'package:mediqux_mobile/widgets/gradient_avatar.dart';
 import 'package:mediqux_mobile/widgets/nav_list_tile.dart';
@@ -76,8 +77,10 @@ class AccountScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            const _VersionFooter(),
+            const SizedBox(height: 20),
+            const _SectionLabel('About'),
+            const SizedBox(height: 8),
+            const _AboutCard(),
           ],
         ),
       ),
@@ -145,34 +148,68 @@ class _ProfileCard extends StatelessWidget {
   }
 }
 
-class _VersionFooter extends StatefulWidget {
-  const _VersionFooter();
+/// Shows the installed app version alongside the connected server's API
+/// version (from the unauthenticated `GET /health` endpoint), so a mismatch
+/// between the two is visible at a glance when debugging.
+class _AboutCard extends ConsumerStatefulWidget {
+  const _AboutCard();
 
   @override
-  State<_VersionFooter> createState() => _VersionFooterState();
+  ConsumerState<_AboutCard> createState() => _AboutCardState();
 }
 
-class _VersionFooterState extends State<_VersionFooter> {
-  String? _version;
+class _AboutCardState extends ConsumerState<_AboutCard> {
+  String? _appVersion;
 
   @override
   void initState() {
     super.initState();
     PackageInfo.fromPlatform().then((info) {
-      if (mounted) setState(() => _version = 'v${info.version}');
+      if (mounted) {
+        setState(() => _appVersion = 'v${info.version}+${info.buildNumber}');
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_version == null) return const SizedBox.shrink();
-    final glass = Theme.of(context).extension<GlassColors>()!;
-    return Center(
-      child: Text(
-        'Mediqux $_version',
-        style: Theme.of(
-          context,
-        ).textTheme.labelSmall?.copyWith(color: glass.muted2),
+    final theme = Theme.of(context);
+    final glass = theme.extension<GlassColors>()!;
+    final healthAsync = ref.watch(apiHealthProvider);
+    final apiVersion = healthAsync.when(
+      data: (h) => 'v${h.version}',
+      loading: () => '…',
+      error: (_, __) => 'Unavailable',
+    );
+
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Column(
+        children: [
+          NavListTile(
+            icon: Icons.smartphone_outlined,
+            label: 'App Version',
+            trailing: Text(
+              _appVersion ?? '…',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: glass.muted2,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          NavListTile(
+            icon: Icons.dns_outlined,
+            label: 'Server Version',
+            trailing: Text(
+              apiVersion,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: glass.muted2,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
