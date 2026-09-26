@@ -142,6 +142,7 @@ class ConditionDetailScreen extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (condition.severity != null)
                         Align(

@@ -140,6 +140,7 @@ class PrescriptionDetailScreen extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Status chip
                       if (rx.status != null)
